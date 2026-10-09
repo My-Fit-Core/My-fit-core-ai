@@ -34,9 +34,10 @@ MyFit:Core(추구미 기반 코디 추천 앱)의 **AI 서버 레포**입니다.
 
 ## 커밋·브랜치 규칙
 
-- 브랜치: `feat/<slug>`, `fix/<slug>`, `docs/<slug>`, `exp/<slug>`(실험)
+- `main`: 배포 브랜치. `develop`에서 PR로만 병합한다.
+- `develop`: 개발 통합 브랜치. 작업 브랜치는 여기서 만들고 여기로 PR한다.
+- 작업 브랜치: `feat/<slug>`, `fix/<slug>`, `docs/<slug>`, `exp/<slug>`(실험)
 - 커밋 메시지: `feat: ...`, `fix: ...`, `docs: ...`, `exp: ...`, `chore: ...`
-- `main`에는 PR로만 병합한다.
 
 ## 파일명 규칙
 
