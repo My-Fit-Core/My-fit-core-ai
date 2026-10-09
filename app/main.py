@@ -6,7 +6,13 @@
 
 from fastapi import FastAPI
 
-from app.schemas import API_VERSION, AnalyzeRequest, AnalyzeResult, ColorInfo, DetectedItem
+from app.schemas import (
+    API_VERSION,
+    AnalyzeRequest,
+    AnalyzeResult,
+    ColorInfo,
+    DetectedItem,
+)
 
 MODEL_VERSION = "mock-0"
 
