@@ -1,0 +1,11 @@
+# GPU 환경에서 설치. 버전은 PoC 후 고정한다.
+-r requirements.txt
+torch
+torchvision
+transformers
+open_clip_torch
+ultralytics
+pillow
+numpy
+scikit-learn
+opencv-python-headless

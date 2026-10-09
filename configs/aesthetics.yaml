@@ -1,0 +1,30 @@
+# 15대 추구미 및 카테고리 체계
+# 상태: 임시. 확정 전까지 수정은 docs/todo/meeting-decisions-1013.md 에서 논의한다.
+# key는 백엔드 DB와 동일하게 snake_case로 유지한다.
+
+aesthetics:
+  - key: clean_girl
+    name: Clean Girl
+    prompts:
+      - "a minimal neutral-toned outfit, clean girl aesthetic"
+  - key: dark_academia
+    name: Dark Academia
+    prompts:
+      - "a brown wool blazer and plaid skirt, dark academia aesthetic"
+  - key: balletcore
+    name: Balletcore
+    prompts:
+      - "a wrap cardigan and tulle skirt with ballet flats, balletcore aesthetic"
+  - key: cottagecore
+    name: Cottagecore
+    prompts:
+      - "a floral puff-sleeve dress, cottagecore aesthetic"
+  # TBD: 나머지 11개
+
+categories:  # TBD: 백엔드 ERD enum과 맞출 것
+  top: [tshirt, shirt, blouse, knit, hoodie, sleeveless]
+  bottom: [jeans, slacks, shorts, mini_skirt, long_skirt]
+  dress: [mini_dress, long_dress]
+  outer: [jacket, blazer, coat, cardigan, padding]
+  shoes: [sneakers, flats, loafers, heels, boots, sandals]
+  accessory: [bag, hat, scarf, jewelry]
