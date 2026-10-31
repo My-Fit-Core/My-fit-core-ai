@@ -2,6 +2,7 @@
 # 상태: 추구미 5개는 기획 확정, 프롬프트는 실험용 초안, 카테고리는 임시.
 # key는 백엔드 DB와 동일하게 snake_case로 유지한다.
 # prompts.outfit: 코디 사진용(1단계 실험), prompts.item: 옷 단독 사진용(2단계 실험, 추후 작성).
+# kfashion: K-Fashion 스타일과의 잠정 연결. 근거는 docs/04-kfashion-validation.md 참고.
 
 aesthetics:
   - key: feminine
@@ -13,6 +14,8 @@ aesthetics:
         - "a pastel pink ruffled blouse with a ribbon tie, feminine style"
         - "a sweet outfit with ribbon bows and tiered ruffles in pastel colors, feminine style"
       item: []
+    kfashion:
+      styles: [로맨틱, 페미닌]
   - key: y2k
     name: Y2K
     prompts:
@@ -22,6 +25,9 @@ aesthetics:
         - "a shiny bright-colored crop top with low-rise cargo pants and a small shoulder bag, early 2000s Y2K fashion"
         - "a velour tracksuit with tinted sunglasses and rhinestone accessories, early 2000s Y2K fashion"
       item: []
+    kfashion:
+      styles: [키치]
+      note: "근거 약함. K-Fashion에 대응 스타일이 없어 직접 수집 필요"
   - key: minimal
     name: 미니멀
     prompts:
@@ -31,6 +37,9 @@ aesthetics:
         - "a monochrome outfit in beige with no patterns or logos, minimalist style"
         - "a sleek structured outfit in black and white with no decoration, minimalist style"
       item: []
+    kfashion:
+      styles: [모던, 소피스트케이티드]
+      note: "근거 약함. 미니멀 쏠림의 영향을 받음"
   - key: vintage_layered
     name: 빈티지 레이어드
     prompts:
@@ -40,6 +49,10 @@ aesthetics:
         - "a distressed wool vest layered over a long shirt and loose trousers in earth tones, vintage layered style"
         - "an aged corduroy jacket layered over several tops with a long skirt in muted earthy colors, vintage layered style"
       item: []
+    kfashion:
+      styles: [컨트리, 히피, 웨스턴]
+      excluded: [밀리터리]
+      note: "밀리터리는 색감 반응 가능성이 있어 제외"
   - key: casual
     name: 캐주얼
     prompts:
@@ -49,6 +62,9 @@ aesthetics:
         - "a gray crewneck sweatshirt with basic jeans and white sneakers, casual style"
         - "a zip-up hoodie with jogger pants and sneakers, casual style"
       item: []
+    kfashion:
+      styles: [스포티, 힙합]
+      secondary: [스트리트]
 
 categories:  # TBD: 백엔드 ERD enum과 맞출 것
   top: [tshirt, shirt, blouse, knit, hoodie, sleeveless]

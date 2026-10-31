@@ -1,7 +1,8 @@
 import pytest
+import yaml
 
 from scripts.eval_aesthetics_on_kfashion import summarize
-from scripts.eval_kfashion_styles import Record
+from scripts.eval_kfashion_styles import ROOT, Record
 
 
 def test_summarize_means_lift_and_top_counts():
@@ -20,3 +21,15 @@ def test_summarize_means_lift_and_top_counts():
     assert result["by_style"]["A"]["lift"] == pytest.approx([0.2, -0.2])
     assert result["by_style"]["A"]["top"] == [2, 0]
     assert result["by_style"]["B"]["top"] == [0, 1]
+
+
+def test_aesthetic_mapping_uses_known_styles():
+    load = lambda name: yaml.safe_load(
+        (ROOT / "configs" / name).read_text(encoding="utf-8")
+    )
+    known = {s["name"] for s in load("kfashion_styles.yaml")["styles"]}
+    for a in load("aesthetics.yaml")["aesthetics"]:
+        mapping = a["kfashion"]
+        assert mapping["styles"]
+        for field in ("styles", "secondary", "excluded"):
+            assert set(mapping.get(field, [])) <= known, (a["key"], field)
