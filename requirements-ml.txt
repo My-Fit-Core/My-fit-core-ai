@@ -1,4 +1,4 @@
-# GPU 환경에서 설치. 버전은 PoC 후 고정한다.
+# Install in a GPU environment. Pin versions after the PoC.
 -r requirements.txt
 torch
 torchvision

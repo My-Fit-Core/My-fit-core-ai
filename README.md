@@ -7,7 +7,7 @@ MyFit:Core의 AI 서버입니다. 다중 의류 검출·누끼·태깅, 코디 �
 ## 빠른 시작 (목업 서버, GPU 불필요)
 
 ```bash
-python3.11 -m venv .venv
+python3.11 -m venv .venv         # Windows: py -3.11 -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env
