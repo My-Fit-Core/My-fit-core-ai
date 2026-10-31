@@ -1,0 +1,27 @@
+# K-Fashion 일반 스타일 23종 (평가용). name은 데이터셋 라벨 값과 같아야 한다.
+# 프롬프트는 특정 스타일로 치우치지 않도록 같은 문장 틀에 스타일 이름만 넣은 초안이다.
+
+styles:
+  - {key: street, name: 스트리트, prompts: ["a photo of a person wearing a street style outfit"]}
+  - {key: feminine, name: 페미닌, prompts: ["a photo of a person wearing a feminine style outfit"]}
+  - {key: resort, name: 리조트, prompts: ["a photo of a person wearing a resort style outfit"]}
+  - {key: modern, name: 모던, prompts: ["a photo of a person wearing a modern style outfit"]}
+  - {key: romantic, name: 로맨틱, prompts: ["a photo of a person wearing a romantic style outfit"]}
+  - {key: classic, name: 클래식, prompts: ["a photo of a person wearing a classic style outfit"]}
+  - {key: country, name: 컨트리, prompts: ["a photo of a person wearing a country style outfit"]}
+  - {key: sophisticated, name: 소피스트케이티드, prompts: ["a photo of a person wearing a sophisticated style outfit"]}
+  - {key: sporty, name: 스포티, prompts: ["a photo of a person wearing a sporty style outfit"]}
+  - {key: genderless, name: 젠더리스, prompts: ["a photo of a person wearing a genderless style outfit"]}
+  - {key: mannish, name: 매니시, prompts: ["a photo of a person wearing a mannish style outfit"]}
+  - {key: tomboy, name: 톰보이, prompts: ["a photo of a person wearing a tomboy style outfit"]}
+  - {key: retro, name: 레트로, prompts: ["a photo of a person wearing a retro style outfit"]}
+  - {key: hippie, name: 히피, prompts: ["a photo of a person wearing a hippie style outfit"]}
+  - {key: sexy, name: 섹시, prompts: ["a photo of a person wearing a sexy style outfit"]}
+  - {key: kitsch, name: 키치, prompts: ["a photo of a person wearing a kitsch style outfit"]}
+  - {key: oriental, name: 오리엔탈, prompts: ["a photo of a person wearing an oriental style outfit"]}
+  - {key: avant_garde, name: 아방가르드, prompts: ["a photo of a person wearing an avant-garde style outfit"]}
+  - {key: military, name: 밀리터리, prompts: ["a photo of a person wearing a military style outfit"]}
+  - {key: preppy, name: 프레피, prompts: ["a photo of a person wearing a preppy style outfit"]}
+  - {key: western, name: 웨스턴, prompts: ["a photo of a person wearing a western style outfit"]}
+  - {key: hiphop, name: 힙합, prompts: ["a photo of a person wearing a hip-hop style outfit"]}
+  - {key: punk, name: 펑크, prompts: ["a photo of a person wearing a punk style outfit"]}
