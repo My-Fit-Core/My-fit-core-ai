@@ -1,27 +1,212 @@
 # K-Fashion 일반 스타일 23종 (평가용). name은 데이터셋 라벨 값과 같아야 한다.
-# 프롬프트는 특정 스타일로 치우치지 않도록 같은 문장 틀에 스타일 이름만 넣은 초안이다.
+# prompts.name_only: 같은 문장 틀에 스타일 이름만 넣은 프롬프트.
+# prompts.described: 스타일 특징을 넣은 프롬프트 초안. 데이터셋의 공식 정의가 아니라 작성자가 쓴 표현이다.
 
 styles:
-  - {key: street, name: 스트리트, prompts: ["a photo of a person wearing a street style outfit"]}
-  - {key: feminine, name: 페미닌, prompts: ["a photo of a person wearing a feminine style outfit"]}
-  - {key: resort, name: 리조트, prompts: ["a photo of a person wearing a resort style outfit"]}
-  - {key: modern, name: 모던, prompts: ["a photo of a person wearing a modern style outfit"]}
-  - {key: romantic, name: 로맨틱, prompts: ["a photo of a person wearing a romantic style outfit"]}
-  - {key: classic, name: 클래식, prompts: ["a photo of a person wearing a classic style outfit"]}
-  - {key: country, name: 컨트리, prompts: ["a photo of a person wearing a country style outfit"]}
-  - {key: sophisticated, name: 소피스트케이티드, prompts: ["a photo of a person wearing a sophisticated style outfit"]}
-  - {key: sporty, name: 스포티, prompts: ["a photo of a person wearing a sporty style outfit"]}
-  - {key: genderless, name: 젠더리스, prompts: ["a photo of a person wearing a genderless style outfit"]}
-  - {key: mannish, name: 매니시, prompts: ["a photo of a person wearing a mannish style outfit"]}
-  - {key: tomboy, name: 톰보이, prompts: ["a photo of a person wearing a tomboy style outfit"]}
-  - {key: retro, name: 레트로, prompts: ["a photo of a person wearing a retro style outfit"]}
-  - {key: hippie, name: 히피, prompts: ["a photo of a person wearing a hippie style outfit"]}
-  - {key: sexy, name: 섹시, prompts: ["a photo of a person wearing a sexy style outfit"]}
-  - {key: kitsch, name: 키치, prompts: ["a photo of a person wearing a kitsch style outfit"]}
-  - {key: oriental, name: 오리엔탈, prompts: ["a photo of a person wearing an oriental style outfit"]}
-  - {key: avant_garde, name: 아방가르드, prompts: ["a photo of a person wearing an avant-garde style outfit"]}
-  - {key: military, name: 밀리터리, prompts: ["a photo of a person wearing a military style outfit"]}
-  - {key: preppy, name: 프레피, prompts: ["a photo of a person wearing a preppy style outfit"]}
-  - {key: western, name: 웨스턴, prompts: ["a photo of a person wearing a western style outfit"]}
-  - {key: hiphop, name: 힙합, prompts: ["a photo of a person wearing a hip-hop style outfit"]}
-  - {key: punk, name: 펑크, prompts: ["a photo of a person wearing a punk style outfit"]}
+  - key: street
+    name: 스트리트
+    prompts:
+      name_only:
+        - "a photo of a person wearing a street style outfit"
+      described:
+        - "an urban outfit with an oversized graphic tee, baggy pants and sneakers, street style"
+        - "a hoodie layered under a bomber jacket with cargo pants and a cap, street style"
+        - "a bold logo sweatshirt with wide jeans and chunky sneakers, street style"
+  - key: feminine
+    name: 페미닌
+    prompts:
+      name_only:
+        - "a photo of a person wearing a feminine style outfit"
+      described:
+        - "a soft blouse with a flowy skirt in pastel colors, feminine style"
+        - "a fitted dress with delicate ruffles and a defined waist, feminine style"
+        - "a graceful top with a pleated skirt and dainty accessories, feminine style"
+  - key: resort
+    name: 리조트
+    prompts:
+      name_only:
+        - "a photo of a person wearing a resort style outfit"
+      described:
+        - "a loose printed maxi dress for a beach vacation, resort style"
+        - "a linen shirt with wide shorts in bright tropical colors, resort style"
+        - "a sundress with strappy sandals and a straw hat, resort style"
+  - key: modern
+    name: 모던
+    prompts:
+      name_only:
+        - "a photo of a person wearing a modern style outfit"
+      described:
+        - "a sleek monochrome outfit with clean lines and no decoration, modern style"
+        - "a simple structured jacket with straight trousers in black and gray, modern style"
+        - "a sharp minimal silhouette in a single neutral color, modern style"
+  - key: romantic
+    name: 로맨틱
+    prompts:
+      name_only:
+        - "a photo of a person wearing a romantic style outfit"
+      described:
+        - "a dreamy dress with lace, frills and floral details in soft pink, romantic style"
+        - "a sheer chiffon blouse with puffed sleeves and a long tiered skirt, romantic style"
+        - "a delicate floral dress with ribbons and lace trim, romantic style"
+  - key: classic
+    name: 클래식
+    prompts:
+      name_only:
+        - "a photo of a person wearing a classic style outfit"
+      described:
+        - "a tailored wool blazer with pressed trousers in navy and beige, classic style"
+        - "a timeless trench coat over a plain shirt and slacks, classic style"
+        - "a traditional knit with a knee-length A-line skirt, classic style"
+  - key: country
+    name: 컨트리
+    prompts:
+      name_only:
+        - "a photo of a person wearing a country style outfit"
+      described:
+        - "a plaid flannel shirt with worn denim and boots, country style"
+        - "a gingham dress with a knitted cardigan in natural colors, country style"
+        - "a rustic cotton smock dress in earthy tones, country style"
+  - key: sophisticated
+    name: 소피스트케이티드
+    prompts:
+      name_only:
+        - "a photo of a person wearing a sophisticated style outfit"
+      described:
+        - "a refined silk blouse with tailored wide trousers, sophisticated style"
+        - "a chic one-tone coat with elegant accessories, sophisticated style"
+        - "a polished city look with a slim skirt and a fitted jacket, sophisticated style"
+  - key: sporty
+    name: 스포티
+    prompts:
+      name_only:
+        - "a photo of a person wearing a sporty style outfit"
+      described:
+        - "athletic wear with a track jacket and leggings, sporty style"
+        - "a zip-up windbreaker with jogger pants and running shoes, sporty style"
+        - "a sleeveless jersey top with training shorts and sneakers, sporty style"
+  - key: genderless
+    name: 젠더리스
+    prompts:
+      name_only:
+        - "a photo of a person wearing a genderless style outfit"
+      described:
+        - "a loose unisex shirt with straight pants in a muted color, genderless style"
+        - "an oversized neutral coat with a boxy silhouette, genderless style"
+        - "a plain boxy sweatshirt with relaxed trousers and no gendered details, genderless style"
+  - key: mannish
+    name: 매니시
+    prompts:
+      name_only:
+        - "a photo of a person wearing a mannish style outfit"
+      described:
+        - "an oversized menswear suit jacket with wide trousers on a woman, mannish style"
+        - "a menswear-inspired vest, shirt and necktie, mannish style"
+        - "a double-breasted masculine blazer with loafers, mannish style"
+  - key: tomboy
+    name: 톰보이
+    prompts:
+      name_only:
+        - "a photo of a person wearing a tomboy style outfit"
+      described:
+        - "a boyish outfit with a baseball cap, a plain tee and loose jeans, tomboy style"
+        - "a checked shirt over a tank top with cargo pants, tomboy style"
+        - "a boyish hoodie with shorts and high-top sneakers, tomboy style"
+  - key: retro
+    name: 레트로
+    prompts:
+      name_only:
+        - "a photo of a person wearing a retro style outfit"
+      described:
+        - "a 1970s outfit with a wide collar shirt and flared pants, retro style"
+        - "a polka dot dress with a 1950s full skirt, retro style"
+        - "an 1980s bright colored jacket with bold shoulders and high-waist pants, retro style"
+  - key: hippie
+    name: 히피
+    prompts:
+      name_only:
+        - "a photo of a person wearing a hippie style outfit"
+      described:
+        - "a bohemian long dress with fringe and paisley patterns, hippie style"
+        - "a tie-dye top with bell-bottom jeans and beaded necklaces, hippie style"
+        - "a crochet vest with a headband and a long flowing skirt, hippie style"
+  - key: sexy
+    name: 섹시
+    prompts:
+      name_only:
+        - "a photo of a person wearing a sexy style outfit"
+      described:
+        - "a body-hugging short dress with a low neckline, sexy style"
+        - "a tight mini skirt with a revealing crop top, sexy style"
+        - "a slinky dress with a high slit and high heels, sexy style"
+  - key: kitsch
+    name: 키치
+    prompts:
+      name_only:
+        - "a photo of a person wearing a kitsch style outfit"
+      described:
+        - "a playful mix of loud clashing colors and cartoon prints, kitsch style"
+        - "a cute novelty print top with colorful plastic accessories, kitsch style"
+        - "a quirky outfit with mismatched patterns and toy-like details, kitsch style"
+  - key: oriental
+    name: 오리엔탈
+    prompts:
+      name_only:
+        - "a photo of a person wearing an oriental style outfit"
+      described:
+        - "a silk dress with a mandarin collar and embroidered patterns, oriental style"
+        - "a wrap jacket with traditional East Asian motifs, oriental style"
+        - "a kimono-sleeve robe with a wide sash belt, oriental style"
+  - key: avant_garde
+    name: 아방가르드
+    prompts:
+      name_only:
+        - "a photo of a person wearing an avant-garde style outfit"
+      described:
+        - "an experimental sculptural garment with exaggerated shapes, avant-garde style"
+        - "an asymmetric deconstructed outfit with unusual layers, avant-garde style"
+        - "a dramatic artistic outfit with an unconventional cut, avant-garde style"
+  - key: military
+    name: 밀리터리
+    prompts:
+      name_only:
+        - "a photo of a person wearing a military style outfit"
+      described:
+        - "an army green field jacket with cargo pockets, military style"
+        - "a camouflage print shirt with combat boots, military style"
+        - "a khaki utility jumpsuit with epaulets and metal buttons, military style"
+  - key: preppy
+    name: 프레피
+    prompts:
+      name_only:
+        - "a photo of a person wearing a preppy style outfit"
+      described:
+        - "a navy school blazer with a plaid pleated skirt, preppy style"
+        - "a cable-knit sweater over a collared shirt with chinos, preppy style"
+        - "a striped polo shirt with a V-neck vest and loafers, preppy style"
+  - key: western
+    name: 웨스턴
+    prompts:
+      name_only:
+        - "a photo of a person wearing a western style outfit"
+      described:
+        - "a fringed suede jacket with cowboy boots, western style"
+        - "a denim shirt with a wide leather belt and a cowboy hat, western style"
+        - "a bandana with boot-cut jeans and a large buckle belt, western style"
+  - key: hiphop
+    name: 힙합
+    prompts:
+      name_only:
+        - "a photo of a person wearing a hip-hop style outfit"
+      described:
+        - "an oversized basketball jersey with very baggy jeans, hip-hop style"
+        - "a large hoodie with a gold chain and high-top sneakers, hip-hop style"
+        - "a loose tracksuit with a bucket hat and a big logo, hip-hop style"
+  - key: punk
+    name: 펑크
+    prompts:
+      name_only:
+        - "a photo of a person wearing a punk style outfit"
+      described:
+        - "a black leather biker jacket with studs and ripped jeans, punk style"
+        - "a tartan skirt with safety pins, fishnet stockings and combat boots, punk style"
+        - "a band tee with metal chains and spikes, punk style"

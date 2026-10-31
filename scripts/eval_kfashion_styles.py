@@ -3,9 +3,9 @@
 라벨과 이미지는 zip에서 바로 읽는다. 파일 12만 개를 하나씩 여는 것보다 빠르고,
 cp949 파일 이름이 풀리면서 깨질 수 있는 OS에서도 같게 동작한다.
 
-    python scripts/eval_kfashion_styles.py
+    python scripts/eval_kfashion_styles.py [--prompt-set name_only|described]
 
-평가 기준은 docs/04-kfashion-validation.md 참고. 결과는 outputs/kfashion_eval/에 저장한다.
+평가 기준은 docs/04-kfashion-validation.md 참고. 결과는 outputs/kfashion_eval/<프롬프트 세트>/에 저장한다.
 """
 
 import argparse
@@ -263,8 +263,9 @@ def main():
     parser.add_argument(
         "--data-dir", type=Path, default=ROOT / "data/kfashion/validation"
     )
+    parser.add_argument("--output-dir", type=Path)
     parser.add_argument(
-        "--output-dir", type=Path, default=ROOT / "outputs/kfashion_eval"
+        "--prompt-set", default="name_only", choices=["name_only", "described"]
     )
     parser.add_argument("--per-style", type=int, default=50)
     parser.add_argument("--seed", type=int, default=42)
@@ -274,6 +275,8 @@ def main():
     config = yaml.safe_load(
         (ROOT / "configs/kfashion_styles.yaml").read_text(encoding="utf-8")
     )["styles"]
+    config = [{**s, "prompts": s["prompts"][args.prompt_set]} for s in config]
+    output_dir = args.output_dir or ROOT / "outputs/kfashion_eval" / args.prompt_set
     styles = [s["name"] for s in config]
     images_zip = find_zip(args.data_dir / "images")
 
@@ -292,14 +295,15 @@ def main():
     result = evaluate(sampled, preds, styles)
     result["run"] = {
         "model": MODEL_ID,
+        "prompt_set": args.prompt_set,
         "seed": args.seed,
         "per_style": args.per_style,
         "total_images": len(all_records),
         "dedupe": stats,
     }
-    save_results(args.output_dir, sampled, score_rows, preds, result, config)
+    save_results(output_dir, sampled, score_rows, preds, result, config)
     print_summary(result)
-    print(f"\n결과: {args.output_dir}")
+    print(f"\n결과: {output_dir}")
 
 
 if __name__ == "__main__":

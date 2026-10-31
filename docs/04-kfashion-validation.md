@@ -242,10 +242,11 @@ zip은 지우지 않습니다. 파일이 12만 개라 압축 해제와 파일별
 `scripts/eval_kfashion_styles.py`로 평가합니다. 라벨과 이미지를 zip에서 바로 읽으므로 압축을 풀지 않아도 되고, 맥에서 폴더 이름이 깨져도 영향을 받지 않습니다. `requirements-ml.txt`가 필요합니다.
 
 ```bash
-python scripts/eval_kfashion_styles.py
+python scripts/eval_kfashion_styles.py                          # 기본: name_only
+python scripts/eval_kfashion_styles.py --prompt-set described
 ```
 
-결과는 `outputs/kfashion_eval/`에 저장됩니다(gitignore). 프롬프트는 `configs/kfashion_styles.yaml`에 있습니다.
+결과는 `outputs/kfashion_eval/<프롬프트 세트>/`에 저장됩니다(gitignore). 프롬프트는 `configs/kfashion_styles.yaml`에 있습니다. `name_only`는 같은 문장 틀에 스타일 이름만 넣은 세트이고, `described`는 스타일 특징을 넣은 세트입니다.
 
 **평가 기준**
 
@@ -255,4 +256,6 @@ python scripts/eval_kfashion_styles.py
 - `기타`(스타일 없음)는 제외
 - 내용이 같은 이미지(CRC와 크기 기준)는 묶음당 1장만 사용. 묶음 안에서 주 스타일이나 서브스타일이 다르면 묶음 전체를 제외
 
-결과는 `docs/reports/261031-2152-01-kfashion-style-eval.md`에 있습니다.
+결과는 `docs/reports/261031-2152-01-kfashion-style-eval.md`(`name_only`)와 `docs/reports/261101-0002-02-described-style-prompts.md`(`described` 비교)에 있습니다.
+
+프롬프트를 더 고치면 다른 시드의 표본으로 확인합니다. 같은 표본을 보며 고치면 수치가 과하게 좋아질 수 있습니다.
