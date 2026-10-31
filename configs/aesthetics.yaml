@@ -1,25 +1,54 @@
-# 15대 추구미 및 카테고리 체계
-# 상태: 임시. 확정 전까지 수정은 docs/todo/meeting-decisions-1013.md 에서 논의한다.
+# 추구미 및 카테고리 체계
+# 상태: 추구미 5개는 기획 확정, 프롬프트는 실험용 초안, 카테고리는 임시.
 # key는 백엔드 DB와 동일하게 snake_case로 유지한다.
+# prompts.outfit: 코디 사진용(1단계 실험), prompts.item: 옷 단독 사진용(2단계 실험, 추후 작성).
 
 aesthetics:
-  - key: clean_girl
-    name: Clean Girl
+  - key: feminine
+    name: 페미닌
     prompts:
-      - "a minimal neutral-toned outfit, clean girl aesthetic"
-  - key: dark_academia
-    name: Dark Academia
+      outfit:
+        - "a soft feminine outfit with a ribbon blouse and flowy skirt in pastel tones, feminine style"
+        - "a ruffled pastel dress with a satin ribbon at the waist, feminine style"
+        - "a pastel pink ruffled blouse with a ribbon tie, feminine style"
+        - "a sweet outfit with ribbon bows and tiered ruffles in pastel colors, feminine style"
+      item: []
+  - key: y2k
+    name: Y2K
     prompts:
-      - "a brown wool blazer and plaid skirt, dark academia aesthetic"
-  - key: balletcore
-    name: Balletcore
+      outfit:
+        - "a cropped baby tee and low-rise jeans with metallic accents, early 2000s Y2K fashion"
+        - "a butterfly print top with a low-rise denim mini skirt and chunky sandals, early 2000s Y2K fashion"
+        - "a shiny bright-colored crop top with low-rise cargo pants and a small shoulder bag, early 2000s Y2K fashion"
+        - "a velour tracksuit with tinted sunglasses and rhinestone accessories, early 2000s Y2K fashion"
+      item: []
+  - key: minimal
+    name: 미니멀
     prompts:
-      - "a wrap cardigan and tulle skirt with ballet flats, balletcore aesthetic"
-  - key: cottagecore
-    name: Cottagecore
+      outfit:
+        - "a clean outfit with simple silhouettes in neutral tones, minimalist style"
+        - "a plain white top with tailored black trousers, minimalist style"
+        - "a monochrome outfit in beige with no patterns or logos, minimalist style"
+        - "a sleek structured outfit in black and white with no decoration, minimalist style"
+      item: []
+  - key: vintage_layered
+    name: 빈티지 레이어드
     prompts:
-      - "a floral puff-sleeve dress, cottagecore aesthetic"
-  # TBD: 나머지 11개
+      outfit:
+        - "a layered outfit of a vintage knit over a shirt with a long skirt in earthy tones, vintage layered style"
+        - "multiple layers of worn, faded clothing in brown and olive tones, vintage layered style"
+        - "a distressed wool vest layered over a long shirt and loose trousers in earth tones, vintage layered style"
+        - "an aged corduroy jacket layered over several tops with a long skirt in muted earthy colors, vintage layered style"
+      item: []
+  - key: casual
+    name: 캐주얼
+    prompts:
+      outfit:
+        - "a relaxed everyday outfit with a t-shirt, basic jeans and sneakers, casual style"
+        - "a comfortable hoodie with sweatpants and running shoes, casual style"
+        - "a gray crewneck sweatshirt with basic jeans and white sneakers, casual style"
+        - "a zip-up hoodie with jogger pants and sneakers, casual style"
+      item: []
 
 categories:  # TBD: 백엔드 ERD enum과 맞출 것
   top: [tshirt, shirt, blouse, knit, hoodie, sleeveless]
