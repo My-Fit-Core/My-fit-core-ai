@@ -10,6 +10,7 @@ myfit-ai/
 │   ├── 01-folder-architecture.md
 │   ├── 02-specs.md
 │   ├── 03-product-plan.md
+│   ├── 04-kfashion-validation.md
 │   ├── todo/                 # 해야 할 일, 후속·보류 작업
 │   └── reports/              # 완료한 일, 주요 결정
 ├── app/                      # FastAPI 서빙 (백엔드가 호출하는 추론 API)
