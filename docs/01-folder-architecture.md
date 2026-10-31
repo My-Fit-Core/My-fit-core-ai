@@ -5,7 +5,6 @@
 ```
 myfit-ai/
 ├── AGENTS.md                 # 작업 규칙·진입점 (사람 + AI 공통)
-├── CLAUDE.md                 # Claude Code용 포인터 → AGENTS.md
 ├── README.md                 # 실행 방법, 빠른 시작
 ├── docs/
 │   ├── 01-folder-architecture.md
