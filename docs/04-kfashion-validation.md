@@ -8,48 +8,49 @@ AI Hub K-Fashion 데이터셋 Validation 세트를 받는 방법과 라벨의 �
 
 ## 데이터 받는 방법
 
-Windows Git Bash에서 레포 최상위 폴더 기준으로 실행합니다. 디스크 여유는 25GB 이상 필요합니다(원천데이터 병합 시점에 약 21GB 사용).
+**Windows Git Bash에서 확인했고, 맥은 아직 검증하지 않았습니다.** 맥에서 받을 때는 아래 "맥에서 다를 수 있는 부분"을 먼저 읽고, 터미널에서 레포 최상위 폴더 기준으로 실행합니다. 디스크 여유는 25GB 이상 필요합니다(원천데이터 병합 시점에 약 21GB 사용).
 
 | 데이터 | 파일키 | 저장 위치 | zip 크기 (바이트) | zip 안의 파일 |
 | --- | --- | --- | ---: | ---: |
 | 라벨링데이터 | 38342 | `data/kfashion/validation/labels/` | 137,522,038 | JSON 120,975개 |
 | 원천데이터 | 38343 | `data/kfashion/validation/images/` | 7,435,119,502 | JPG 120,975개 |
 
-**주의**
+### 1. 이용 신청
 
-- `LC_ALL=C.UTF-8`을 꼭 지정합니다. 없으면 aihubshell이 한글 파일명의 조각을 찾지 못해, 조각을 지우고 0바이트 zip만 남깁니다.
-- aihubshell은 연결이 끊겨도 "Download successful"을 출력하고 종료 코드 0으로 끝나며, `download.tar`도 지웁니다. **출력만 믿지 말고 항상 `unzip -tq`로 확인합니다.**
-- 원천데이터는 aihubshell로 받다가 연결이 끊긴 적이 있어, `curl`로 직접 받는 아래 방법을 씁니다. 실패가 종료 코드로 드러나고 `download.tar`가 남습니다. 끊겼을 때 이어받기가 되는지는 확인하지 못했습니다.
+[AI Hub](https://aihub.or.kr)에 로그인해 K-Fashion 이미지 데이터셋(데이터셋 키 51)의 이용을 신청합니다. 약관상 데이터를 재배포할 수 없습니다.
 
-**준비**
+### 2. API 키 발급
 
-AI Hub에서 발급받은 API 키를 각자의 `.env`에 따옴표 없이 넣습니다. `.env`는 커밋되지 않습니다.
+AI Hub 안내에 따라 API 키를 발급받습니다.
+
+### 3. `.env`에 키 넣기
+
+아직 `.env`가 없으면 `cp .env.example .env`로 만들고, 발급받은 키를 따옴표 없이 넣습니다. `.env`는 커밋되지 않습니다.
 
 ```text
 AIHUB_API_KEY=발급받은_키
 ```
+
+### 4. 다운로드
 
 키는 화면이나 파일에 출력하지 않고 변수로만 씁니다.
 
 ```bash
 ROOT=$(pwd)
 KEY=$(grep '^AIHUB_API_KEY=' .env | cut -d= -f2- | tr -d '\r')
-export LC_ALL=C.UTF-8
+export LC_ALL=C.UTF-8   # 맥은 아래 주의 참고
 mkdir -p data/tools data/kfashion/validation/labels data/kfashion/validation/images
 curl -o data/tools/aihubshell https://api.aihub.or.kr/api/aihubshell.do
 ```
 
-**라벨링데이터**
+라벨링데이터는 aihubshell로 받습니다.
 
 ```bash
 cd "$ROOT/data/kfashion/validation/labels"
 bash "$ROOT/data/tools/aihubshell" -mode d -datasetkey 51 -filekey 38342 -aihubapikey "$KEY"
-Z="014.KFashion/01.데이터/2.Validation/라벨링데이터_modify/라벨링데이터.zip"
-unzip -tq "$Z"          # 통과해야 다음으로 넘어갑니다
-unzip -q -n "$Z" -d .
 ```
 
-**원천데이터**
+원천데이터는 `curl`로 직접 받아 조각을 합칩니다. aihubshell로 받다가 연결이 끊긴 적이 있어서입니다. 이 방법은 실패가 종료 코드로 드러나고 `download.tar`가 남습니다. 끊겼을 때 이어받기가 되는지는 확인하지 못했습니다.
 
 ```bash
 cd "$ROOT/data/kfashion/validation/images"
@@ -58,12 +59,50 @@ echo "curl_exit=$?"     # 0이어야 합니다. 0이 아니면 download.tar를 �
 tar -xf download.tar
 D="014.KFashion/01.데이터/2.Validation/원천데이터_modify"
 (cd "$D" && ls 원천데이터.zip.part* | sort -V | xargs cat > 원천데이터.zip)
-unzip -tq "$D/원천데이터.zip"   # 통과해야 다음으로 넘어갑니다
-rm "$D"/원천데이터.zip.part* download.tar
+```
+
+### 5. `unzip -tq`로 확인
+
+zip 크기가 위 표와 같고 `unzip -tq`를 통과해야 다음으로 넘어갑니다.
+
+```bash
+cd "$ROOT/data/kfashion/validation/labels"
+unzip -tq "014.KFashion/01.데이터/2.Validation/라벨링데이터_modify/라벨링데이터.zip"
+
+cd "$ROOT/data/kfashion/validation/images"
+unzip -tq "$D/원천데이터.zip"
+rm "$D"/원천데이터.zip.part* download.tar   # 통과한 뒤에만 지웁니다
+```
+
+**출력만 믿지 말고 항상 확인합니다.** aihubshell은 연결이 끊겨도 "Download successful"을 출력하고 종료 코드 0으로 끝나며, `download.tar`도 지웁니다.
+
+### 6. 풀 위치
+
+각 zip을 `labels/`와 `images/` 바로 아래에 풉니다. `<스타일 폴더>/<이미지 식별자>.json`과 `<스타일 폴더>/<이미지 식별자>.jpg`가 생깁니다.
+
+```bash
+cd "$ROOT/data/kfashion/validation/labels"
+unzip -q -n "014.KFashion/01.데이터/2.Validation/라벨링데이터_modify/라벨링데이터.zip" -d .
+
+cd "$ROOT/data/kfashion/validation/images"
 unzip -q -n "$D/원천데이터.zip" -d .
 ```
 
-압축을 풀면 `<스타일 폴더>/<이미지 식별자>.json`과 `<스타일 폴더>/<이미지 식별자>.jpg`가 생깁니다. 파일이 12만 개라 압축 해제와 파일별 읽기가 오래 걸립니다. 라벨 전체를 읽을 때는 zip에서 바로 읽는 편이 훨씬 빠릅니다(파일 이름 인코딩은 cp949).
+zip은 지우지 않습니다. 파일이 12만 개라 압축 해제와 파일별 읽기가 오래 걸리고, 라벨 전체를 읽을 때는 zip에서 바로 읽는 편이 훨씬 빠릅니다(zip 안의 파일 이름 인코딩은 cp949).
+
+### 주의: 로케일 (공통)
+
+`LC_ALL`을 UTF-8로 지정하지 않으면 aihubshell이 한글 파일명의 조각을 찾지 못해, 조각을 지우고 0바이트 zip만 남깁니다. Windows Git Bash에서 실제로 겪었고 `LC_ALL=C.UTF-8`로 해결했습니다.
+
+### 주의: 맥에서 다를 수 있는 부분 (미검증)
+
+아래는 실제로 확인한 내용이 아니라 미리 확인해 볼 항목입니다. 맥에서 받은 뒤 결과를 이 문서에 반영합니다.
+
+- **터미널:** Git Bash 대신 기본 터미널을 씁니다. 기본 셸이 zsh여도 aihubshell은 `bash`로 실행합니다.
+- **`LC_ALL`:** 맥에서도 필요한지 확인하지 못했습니다. `locale -a | grep -i utf`로 값을 확인해, `C.UTF-8`이 없으면 `export LC_ALL=en_US.UTF-8`을 씁니다.
+- **`sort -V`:** 맥 버전에 따라 동작이 다를 수 있습니다. 합치기 전에 `ls 원천데이터.zip.part* | sort -V`로 조각이 오프셋 숫자 순서(`part0`, `part1073741824`, ...)로 나오는지 확인합니다.
+- **`unzip`의 한글 폴더명:** zip 안의 파일 이름이 cp949라서 맥의 `unzip`으로 풀면 스타일 폴더 이름이 깨질 수 있습니다. 풀고 난 뒤 폴더 24개의 이름을 확인합니다.
+- **한글 파일명 정규화:** 맥은 한글 파일명을 자모가 분리된 형태로 다룰 수 있습니다. 코드에서 폴더 이름을 비교할 때 결과가 비면 이 부분을 먼저 확인합니다.
 
 ## 요약
 
