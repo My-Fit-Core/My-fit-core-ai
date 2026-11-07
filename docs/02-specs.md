@@ -22,7 +22,7 @@
 | --- | --- | --- |
 | 언어 | Python 3.11 | PyTorch 호환성 기준 |
 | 서빙 | FastAPI + Uvicorn | |
-| 검출 | YOLO(DeepFashion2, `deepfashion2_yolov8s-seg.pt`) | 기본으로 결정. Grounding DINO는 보류. 근거는 `261108-0305-01-detection-segmentation-poc.md` |
+| 검출 | YOLO(DeepFashion2, `deepfashion2_yolov8s-seg.pt`) | 기본으로 결정. 부위 판정도 YOLO 클래스만 쓴다(`261108-0315-01-category-poc.md`). Grounding DINO는 보류. 근거는 `261108-0305-01-detection-segmentation-poc.md` |
 | 분할·누끼 | YOLO 자체 마스크 + 구멍 메우기 | 기본으로 결정. SAM 2.1 tiny 추가 여부는 Flat Lay 사진에서 경계 품질 비교 후 결정 `TBD` |
 | 태깅·임베딩 | FashionCLIP (zero-shot) | 입력은 마스크 밖을 흰색으로 지우고 박스로 자른 사진(`261108-0315-01-category-poc.md`). 색상은 마스크 픽셀 k-means |
 | 추천 | 규칙 기반 점수 함수 (`recommend/`) | GPU 불필요 |

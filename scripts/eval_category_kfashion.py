@@ -101,7 +101,11 @@ def summarize(rows, missed):
     for name, values in groups.items():
         if not values:
             continue
-        g = {"n": len(values), "part_yolo": rate(values, "yolo_part")}
+        g = {
+            "n": len(values),
+            "part_yolo": rate(values, "yolo_part"),
+            "part_combo": rate(values, "part_combo"),
+        }
         for c in CROPS:
             g[f"part4_{c}"] = rate(values, f"part4_{c}")
             g[f"part_from_category_{c}"] = rate(values, f"part_from_category_{c}")
@@ -110,7 +114,17 @@ def summarize(rows, missed):
                 r["category"] in r[f"top3_{c}"] for r in values
             ) / len(values)
         result["by_group"][name] = g
+    # 아우터가 아닌데 아우터로 판정한 수. 조합 규칙이 늘리는 오답이다.
+    result["false_outer"] = {
+        key: sum(r[key] == "아우터" and r["part"] != "아우터" for r in rows)
+        for key in ("yolo_part", "part_from_category_masked", "part_combo")
+    }
     return result
+
+
+def combine_part(yolo_part, clip_part):
+    """YOLO 부위를 기본으로 쓰고, FashionCLIP(카테고리 경유)이 아우터라고 하면 아우터로 바꾼다."""
+    return "아우터" if clip_part == "아우터" else yolo_part
 
 
 def main():
@@ -186,6 +200,9 @@ def main():
                         categories[ranked[0]]
                     ]
                     row[f"part4_{c}"] = PARTS[part_scores.index(max(part_scores))]
+                row["part_combo"] = combine_part(
+                    row["yolo_part"], row["part_from_category_masked"]
+                )
                 rows.append(row)
 
     result = summarize(rows, missed)
@@ -213,6 +230,7 @@ def main():
         print(
             name, json.dumps({k: round(v, 3) for k, v in g.items()}, ensure_ascii=False)
         )
+    print("아우터 아닌데 아우터로 판정:", result["false_outer"])
     print(f"결과: {args.output_dir}")
 
 
