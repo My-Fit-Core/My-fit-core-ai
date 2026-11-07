@@ -84,6 +84,7 @@
 ## 4. 데이터 기준 (configs/aesthetics.yaml)
 
 - 사용자에게 보이는 추구미: 5개 (페미닌, Y2K, 미니멀, 빈티지 레이어드, 캐주얼)
+- 추구미 점수: FashionCLIP 프롬프트 세트 `outfit`의 점수를 `calibration.prior`(고정값)로 나눠 다시 합 1로 보정한다. 근거는 `docs/reports/261108-0230-01-aesthetic-display.md`.
 - 카테고리 체계: 상의/하의/아우터/신발/잡화 + 세부 분류 `TBD`. 백엔드 ERD enum과 반드시 동일하게 유지.
 - 주 타겟이 1020대 여성이므로 원피스, 스커트 세부, 가방·액세서리를 세분화한다.
 

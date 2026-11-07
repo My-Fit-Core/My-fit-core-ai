@@ -262,7 +262,7 @@ python scripts/eval_kfashion_styles.py --prompt-set described
 
 ## 추구미 연결 (잠정)
 
-추구미 프롬프트의 스타일별 측정 결과를 근거로 잠정 연결했습니다. 설정은 `configs/aesthetics.yaml`의 `kfashion`에 있습니다. 측정은 `python scripts/eval_aesthetics_on_kfashion.py`로 재현합니다.
+추구미 프롬프트의 스타일별 측정 결과를 근거로 잠정 연결했습니다. 설정은 `configs/aesthetics.yaml`의 `kfashion`에 있습니다. 측정은 `python scripts/eval_aesthetics_on_kfashion.py --prompt-sets outfit`로 재현합니다(결과는 `outputs/aesthetics_on_kfashion/seed42/`).
 
 | 추구미 | 연결 스타일 (잠정) | 차이 | 근거 수준과 메모 |
 | --- | --- | --- | --- |
@@ -311,3 +311,15 @@ python scripts/eval_kfashion_styles.py --prompt-set described
 - 다음 단계 후보
   - K-Fashion Training 라벨로 FashionCLIP 임베딩 위에 작은 분류기 학습(linear probe)
   - Y2K 등 마이크로 트렌드는 직접 수집
+
+## 보정과 반대 개념 축 (issue #42)
+
+```bash
+python scripts/eval_aesthetics_on_kfashion.py --seed 7    # outfit, outfit_v2 세트와 축을 함께 측정
+```
+
+- 실루엣·색·아이템 중심으로 다시 쓴 `outfit_v2`는 나아지지 않았습니다. 미니멀 쏠림이 캐주얼 쏠림으로 옮겨 갔습니다. 기본 세트는 `outfit`을 유지합니다.
+- 점수를 전체 평균으로 나눠 다시 합 1로 만드는 보정은 쏠림을 줄이고(미니멀 1위 559 → 454장) 연결 스타일 적중률을 조금 올렸습니다.
+- 반대 개념 축 중 캐주얼↔포멀, 뮤트↔컬러풀은 문장을 바꿔도 비교적 안정적이고(상관 0.66~0.83), 은은한↔스테이트먼트는 불안정합니다(0.45~0.49).
+
+자세한 수치는 `docs/reports/261108-0230-01-aesthetic-display.md`에 있습니다.
