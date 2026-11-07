@@ -28,7 +28,8 @@ from scripts.eval_kfashion_styles import (
     load_records,
 )
 
-MODELS = ["sam2.1_t.pt", "sam2.1_s.pt", "sam2.1_b.pt", "sam2.1_l.pt"]
+# 기본은 후보 2개. s/b/l은 tiny와 IoU가 비슷하고 느려서(v2 측정) --models로만 돌린다.
+MODELS = ["mobile_sam.pt", "sam2.1_t.pt"]
 PARTS = ["상의", "하의", "아우터", "원피스"]
 SMOOTH_RATIO = 0.005  # 경계 다듬기 크기. 이미지 짧은 변 대비 비율
 
@@ -102,6 +103,8 @@ VARIANTS = {
     "smooth": {"smooth": True},
     "all": {"largest": True, "fill": True, "smooth": True},
 }
+# 대표 IoU(mean_iou)에 쓰는 후처리. 셋 다 적용하면 후처리 전보다 낮아져(v3: 0.749 < 0.779) 구멍 메우기만 쓴다.
+DEFAULT_POSTPROCESS = "fill"
 
 
 def postprocess_mask(mask, largest=False, fill=False, smooth=False):
@@ -198,66 +201,228 @@ def pick_samples(data_dir, n, seed):
     return images_zip, samples
 
 
-def run_model(name, weights_dir, images_zip, samples, device, out_dir, save_cutouts):
+# DeepFashion2 13종 → K-Fashion 부위. DeepFashion2 vest는 민소매 상의라 상의로 둔다(K-Fashion 베스트는 아우터).
+DF2_TO_PART = {
+    "short_sleeved_shirt": "상의",
+    "long_sleeved_shirt": "상의",
+    "vest": "상의",
+    "sling": "상의",
+    "short_sleeved_outwear": "아우터",
+    "long_sleeved_outwear": "아우터",
+    "shorts": "하의",
+    "trousers": "하의",
+    "skirt": "하의",
+    "short_sleeved_dress": "원피스",
+    "long_sleeved_dress": "원피스",
+    "vest_dress": "원피스",
+    "sling_dress": "원피스",
+}
+MATCH_IOU = 0.5  # 검출 박스를 정답 박스로 인정하는 최소 박스 IoU
+
+
+def box_iou(a, b):
+    w = min(a[2], b[2]) - max(a[0], b[0])
+    h = min(a[3], b[3]) - max(a[1], b[1])
+    inter = max(w, 0) * max(h, 0)
+    union = (a[2] - a[0]) * (a[3] - a[1]) + (b[2] - b[0]) * (b[3] - b[1]) - inter
+    return inter / union if union > 0 else 0.0
+
+
+def match_boxes(truth, preds, threshold=MATCH_IOU):
+    """정답 박스마다 겹침이 큰 순서로 예측 박스를 하나씩 짝짓는다. 부위는 보지 않는다."""
+    pairs = sorted(
+        ((box_iou(t, p), i, j) for i, t in enumerate(truth) for j, p in enumerate(preds)),
+        reverse=True,
+    )
+    matched, used = [None] * len(truth), set()
+    for iou, i, j in pairs:
+        if iou < threshold:
+            break
+        if matched[i] is None and j not in used:
+            matched[i] = j
+            used.add(j)
+    return matched
+
+
+def load_image(archive, sample):
+    """이미지를 읽는다. 크기가 라벨과 다르면 좌표를 믿을 수 없으므로 None."""
+    from PIL import Image
+
+    image = Image.open(io.BytesIO(archive.read(sample["record"].member))).convert("RGB")
+    return image if image.size == sample["size"] else None
+
+
+def truth_mask(points, size):
     import numpy as np
     from PIL import Image, ImageDraw
+
+    truth = Image.new("1", size)
+    ImageDraw.Draw(truth).polygon(points, fill=1)
+    return np.array(truth)
+
+
+def mask_row(model, image_id, part, raw, truth):
+    """원본 마스크와 후처리별 마스크의 IoU. 마스크가 없으면(놓침) 0."""
+    row = {
+        "model": model,
+        "image_id": image_id,
+        "part": part,
+        "iou_raw": 0.0 if raw is None else mask_iou(raw, truth),
+        "missing": raw is None,
+        "components": 0 if raw is None else count_components(raw),
+    }
+    for v, steps in VARIANTS.items():
+        row[f"iou_{v}"] = (
+            0.0 if raw is None else mask_iou(postprocess_mask(raw, **steps), truth)
+        )
+    row["iou"] = row[f"iou_{DEFAULT_POSTPROCESS}"]
+    return row
+
+
+def detect(weights, images_zip, samples, device, conf):
+    """YOLO 검출 결과(박스, 부위, 자체 마스크)와 장당 시간. 크기가 다른 이미지는 None."""
+    from ultralytics import YOLO
+
+    model = YOLO(str(weights))
+    kwargs = {"conf": conf, "device": device, "retina_masks": True, "verbose": False}
+    detections, seconds = [], []
+    with zipfile.ZipFile(images_zip, metadata_encoding=ZIP_NAME_ENCODING) as archive:
+        for sample in samples:
+            image = load_image(archive, sample)
+            if image is None:
+                detections.append(None)
+                continue
+            if not seconds:  # 첫 호출의 준비 시간은 뺀다.
+                model(image, **kwargs)
+            start = time.perf_counter()
+            result = model(image, **kwargs)[0]
+            seconds.append(time.perf_counter() - start)
+            detections.append(
+                {
+                    "boxes": result.boxes.xyxy.cpu().tolist(),
+                    "parts": [
+                        DF2_TO_PART[result.names[int(c)]]
+                        for c in result.boxes.cls.tolist()
+                    ],
+                    "masks": []
+                    if result.masks is None
+                    else list(result.masks.data.cpu().numpy().astype(bool)),
+                }
+            )
+    return detections, seconds
+
+
+def detection_summary(samples, detections, seconds):
+    """재현율(박스 IoU 0.5 이상으로 찾은 정답 비율), 부위까지 맞힌 비율, 찾은 박스의 IoU."""
+    rows, extra = [], []
+    for sample, det in zip(samples, detections):
+        if det is None:
+            continue
+        matched = match_boxes([p["box"] for p in sample["parts"]], det["boxes"])
+        for part, j in zip(sample["parts"], matched):
+            rows.append(
+                {
+                    "part": part["part"],
+                    "found": j is not None,
+                    "part_correct": j is not None and det["parts"][j] == part["part"],
+                    "box_iou": 0.0
+                    if j is None
+                    else box_iou(part["box"], det["boxes"][j]),
+                }
+            )
+        extra.append(len(det["boxes"]) - sum(j is not None for j in matched))
+    found = [r for r in rows if r["found"]]
+    by_part = {}
+    for part in PARTS:
+        values = [r for r in rows if r["part"] == part]
+        if values:
+            by_part[part] = {
+                "n": len(values),
+                "recall": sum(r["found"] for r in values) / len(values),
+                "recall_with_part": sum(r["part_correct"] for r in values)
+                / len(values),
+            }
+    return {
+        "parts": len(rows),
+        "recall": len(found) / len(rows),
+        "recall_with_part": sum(r["part_correct"] for r in rows) / len(rows),
+        "mean_box_iou_found": mean(r["box_iou"] for r in found) if found else 0.0,
+        "unmatched_detections_per_image": mean(extra),
+        "mean_seconds_per_image": mean(seconds),
+        "median_seconds_per_image": median(seconds),
+        "max_seconds_per_image": max(seconds),
+        "by_part": by_part,
+    }
+
+
+def yolo_mask_rows(samples, detections):
+    """YOLO 자체 마스크를 정답 폴리곤과 비교한다. SAM 없이도 충분한지 보려는 비교."""
+    rows = []
+    for sample, det in zip(samples, detections):
+        if det is None:
+            continue
+        matched = match_boxes([p["box"] for p in sample["parts"]], det["boxes"])
+        for part, j in zip(sample["parts"], matched):
+            raw = None if j is None or not det["masks"] else det["masks"][j]
+            truth = truth_mask(part["points"], sample["size"])
+            rows.append(
+                mask_row("yolo_mask", sample["record"].image_id, part["part"], raw, truth)
+            )
+    return rows
+
+
+def run_model(
+    name, weights_dir, images_zip, samples, device, out_dir, save_cutouts, detections=None
+):
+    """SAM에 박스를 주고 정답 폴리곤과 비교한다. detections가 있으면 정답 박스 대신 검출 박스를 쓴다."""
+    from PIL import Image
     from ultralytics import SAM
 
     start = time.perf_counter()
     model = SAM(str(weights_dir / name))
     load_seconds = time.perf_counter() - start
 
+    label = name if detections is None else f"{name}+det"
     rows, seconds, post_seconds, skipped = [], [], [], 0
-    cutout_dir = out_dir / "cutouts" / Path(name).stem
+    cutout_dir = out_dir / "cutouts" / label.replace(".pt", "")
     with zipfile.ZipFile(images_zip, metadata_encoding=ZIP_NAME_ENCODING) as archive:
         for index, sample in enumerate(samples):
             record = sample["record"]
-            image = Image.open(io.BytesIO(archive.read(record.member))).convert("RGB")
-            if image.size != sample["size"]:
+            image = load_image(archive, sample)
+            if image is None:
                 skipped += 1
                 continue
-            boxes = [p["box"] for p in sample["parts"]]
-            if index == 0:  # 첫 호출의 준비 시간은 워밍된 추론 시간에서 뺀다.
-                model(image, bboxes=boxes, device=device, verbose=False)
-            start = time.perf_counter()
-            result = model(image, bboxes=boxes, device=device, verbose=False)[0]
-            seconds.append(time.perf_counter() - start)
+            truth_boxes = [p["box"] for p in sample["parts"]]
+            if detections is None:
+                boxes, matched = truth_boxes, list(range(len(truth_boxes)))
+            else:
+                boxes = detections[index]["boxes"]
+                matched = match_boxes(truth_boxes, boxes)
 
-            masks = (
-                []
-                if result.masks is None
-                else result.masks.data.cpu().numpy().astype(bool)
-            )
-            assigned = assign_masks(list(masks), boxes)
+            masks = []
+            if boxes:
+                if not seconds:  # 첫 호출의 준비 시간은 워밍된 추론 시간에서 뺀다.
+                    model(image, bboxes=boxes, device=device, verbose=False)
+                start = time.perf_counter()
+                result = model(image, bboxes=boxes, device=device, verbose=False)[0]
+                seconds.append(time.perf_counter() - start)
+                if result.masks is not None:
+                    masks = list(result.masks.data.cpu().numpy().astype(bool))
+            assigned = assign_masks(masks, boxes) if boxes else []
             start = time.perf_counter()
-            cleaned = [
-                None if m is None else postprocess_mask(m, **VARIANTS["all"])
-                for m in assigned
-            ]
+            for m in assigned:
+                if m is not None:
+                    postprocess_mask(m, **VARIANTS[DEFAULT_POSTPROCESS])
             post_seconds.append(time.perf_counter() - start)
-            for part, raw, mask in zip(sample["parts"], assigned, cleaned):
-                truth = Image.new("1", image.size)
-                ImageDraw.Draw(truth).polygon(part["points"], fill=1)
-                truth = np.array(truth)
-                row = {
-                    "model": name,
-                    "image_id": record.image_id,
-                    "part": part["part"],
-                    "iou_raw": 0.0 if raw is None else mask_iou(raw, truth),
-                    "iou": 0.0 if mask is None else mask_iou(mask, truth),
-                    "missing": mask is None,
-                    "components": 0 if raw is None else count_components(raw),
-                }
-                for v, steps in VARIANTS.items():
-                    row[f"iou_{v}"] = (
-                        0.0
-                        if raw is None
-                        else mask_iou(postprocess_mask(raw, **steps), truth)
-                    )
-                rows.append(row)
-                if mask is not None and index < save_cutouts:
+
+            for part, j in zip(sample["parts"], matched):
+                raw = None if j is None else assigned[j]
+                truth = truth_mask(part["points"], image.size)
+                rows.append(mask_row(label, record.image_id, part["part"], raw, truth))
+                if raw is not None and index < save_cutouts:
                     cutout_dir.mkdir(parents=True, exist_ok=True)
                     stem = f"{record.image_id}_{part['part']}"
+                    mask = postprocess_mask(raw, **VARIANTS[DEFAULT_POSTPROCESS])
                     for suffix, alpha in (("", mask), ("_raw", raw)):
                         cutout = image.copy()
                         cutout.putalpha(Image.fromarray(alpha.astype("uint8") * 255))
@@ -285,6 +450,12 @@ def main():
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--save-cutouts", type=int, default=10)
     parser.add_argument("--models", nargs="+", default=MODELS)
+    parser.add_argument(
+        "--detector",
+        type=Path,
+        help="YOLO 가중치. 주면 검출을 평가하고, 검출 박스로도 SAM을 돌린다.",
+    )
+    parser.add_argument("--conf", type=float, default=0.25)
     args = parser.parse_args()
 
     import torch
@@ -301,26 +472,40 @@ def main():
     args.weights_dir.mkdir(exist_ok=True)
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
-    all_rows, summaries = [], {}
-    for name in args.models:
-        rows, summaries[name] = run_model(
-            name,
-            args.weights_dir,
-            images_zip,
-            samples,
-            device,
-            args.output_dir,
-            args.save_cutouts,
+    all_rows, summaries, detections = [], {}, None
+    payload = {"device": device, "seed": args.seed, "images": len(samples)}
+    if args.detector:
+        detections, det_seconds = detect(
+            args.detector, images_zip, samples, device, args.conf
         )
+        payload["detector"] = {
+            "weights": args.detector.name,
+            "conf": args.conf,
+            "match_iou": MATCH_IOU,
+            **detection_summary(samples, detections, det_seconds),
+        }
+        print("detector", json.dumps(payload["detector"], ensure_ascii=False))
+        rows = yolo_mask_rows(samples, detections)
+        summaries["yolo_mask"] = summarize(rows, det_seconds)
         all_rows += rows
-        print(name, json.dumps(summaries[name], ensure_ascii=False))
+        print("yolo_mask", json.dumps(summaries["yolo_mask"], ensure_ascii=False))
 
-    payload = {
-        "device": device,
-        "seed": args.seed,
-        "images": len(samples),
-        "models": summaries,
-    }
+    for name in args.models:
+        for source in [None] if detections is None else [None, detections]:
+            rows, summary = run_model(
+                name,
+                args.weights_dir,
+                images_zip,
+                samples,
+                device,
+                args.output_dir,
+                args.save_cutouts,
+                source,
+            )
+            summaries[rows[0]["model"]] = summary
+            all_rows += rows
+            print(rows[0]["model"], json.dumps(summary, ensure_ascii=False))
+    payload["models"] = summaries
     (args.output_dir / "summary.json").write_text(
         json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8"
     )

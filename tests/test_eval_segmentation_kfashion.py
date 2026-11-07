@@ -1,6 +1,11 @@
 import pytest
 
 from scripts.eval_segmentation_kfashion import (
+    DF2_TO_PART,
+    PARTS,
+    box_iou,
+    mask_row,
+    match_boxes,
     parts_from_label,
     polygon_points,
     rect_to_xyxy,
@@ -120,3 +125,37 @@ def test_summarize_counts_low_iou_and_missing():
     assert result["missing_masks"] == 1
     assert result["mean_seconds_per_image"] == pytest.approx(2.0)
     assert result["by_part"]["상의"] == {"n": 1, "mean_iou": 0.9}
+
+
+def test_box_iou():
+    assert box_iou([0, 0, 2, 2], [0, 0, 2, 2]) == pytest.approx(1)
+    assert box_iou([0, 0, 2, 2], [1, 0, 3, 2]) == pytest.approx(2 / 6)
+    assert box_iou([0, 0, 1, 1], [2, 2, 3, 3]) == 0
+
+
+def test_match_boxes_one_to_one_above_threshold():
+    truth = [[0, 0, 10, 10], [20, 0, 30, 10], [50, 50, 60, 60]]
+    preds = [[21, 0, 30, 10], [0, 0, 10, 9], [0, 0, 8, 10]]
+    # 겹침이 큰 예측부터 짝짓고, 한 예측은 한 번만 쓴다. 세 번째 정답은 놓침.
+    assert match_boxes(truth, preds) == [1, 0, None]
+    assert match_boxes(truth, []) == [None, None, None]
+
+
+def test_mask_row_uses_fill_as_default_and_zero_when_missing():
+    import numpy as np
+
+    truth = np.zeros((10, 10), dtype=bool)
+    truth[2:8, 2:8] = True
+    raw = truth.copy()
+    raw[4:6, 4:6] = False  # 구멍
+    row = mask_row("m", 1, "상의", raw, truth)
+    assert row["iou"] == row["iou_fill"] == pytest.approx(1)
+    assert row["iou_raw"] < 1
+    missing = mask_row("m", 1, "상의", None, truth)
+    assert missing["missing"] and missing["iou"] == 0
+
+
+def test_df2_classes_map_to_known_parts():
+    assert len(DF2_TO_PART) == 13
+    assert set(DF2_TO_PART.values()) <= set(PARTS)
+
