@@ -21,4 +21,5 @@
 | 대기 | 추천 엔진 v0 (규칙 기반, 슬롯 교체 포함) | F-302, F-304 | (생성 예정) | |
 | 대기 | LLM 스타일리스트 코멘트 | F-303 (P1) | (생성 예정) | |
 | 대기 | 내 옷장으로 따라입기 유사도 검색 | F-402 (P1) | (생성 예정) | |
-| 완료 | K-Fashion 데이터 준비와 FashionCLIP 스타일 평가 | F-203, F-302 | \kfashion-style-eval.md\ | ±031-2152-01-kfashion-style-eval.md\ |
+| 완료 | K-Fashion 데이터 준비와 FashionCLIP 스타일 평가 | F-203, F-302 | `kfashion-style-eval.md` | `261031-2152-01-kfashion-style-eval.md` |
+| 완료 | 추구미 설명형 프롬프트, 비율 보정, 반대 개념 축 측정 | F-203, F-302 | `aesthetic-display.md` | `261108-0230-01-aesthetic-display.md` |
