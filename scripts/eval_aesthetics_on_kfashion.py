@@ -199,8 +199,13 @@ def main():
             f"\n{axis['low']}↔{axis['high']}: 문장 간 상관 "
             f"{report['axes'][axis['key']]['wording_correlation']:.2f}"
         )
-        for side, picked in ((axis["low"], ranked[:3]), (axis["high"], ranked[::-1][:3])):
-            print(f"  {side} 쪽: " + ", ".join(f"{s} {by_style[s]:.2f}" for s in picked))
+        for side, picked in (
+            (axis["low"], ranked[:3]),
+            (axis["high"], ranked[::-1][:3]),
+        ):
+            print(
+                f"  {side} 쪽: " + ", ".join(f"{s} {by_style[s]:.2f}" for s in picked)
+            )
 
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / "summary.json").write_text(
