@@ -57,7 +57,15 @@ def parts_from_label(doc):
         rect = detail["렉트좌표"].get(part, [{}])[0]
         points = polygon_points(detail["폴리곤좌표"].get(part, [{}])[0])
         if rect and len(points) >= 3:
-            parts.append({"part": part, "box": rect_to_xyxy(rect), "points": points})
+            category = detail.get("라벨링", {}).get(part, [{}])[0].get("카테고리")
+            parts.append(
+                {
+                    "part": part,
+                    "box": rect_to_xyxy(rect),
+                    "points": points,
+                    "category": category,
+                }
+            )
     return parts
 
 
@@ -231,7 +239,11 @@ def box_iou(a, b):
 def match_boxes(truth, preds, threshold=MATCH_IOU):
     """정답 박스마다 겹침이 큰 순서로 예측 박스를 하나씩 짝짓는다. 부위는 보지 않는다."""
     pairs = sorted(
-        ((box_iou(t, p), i, j) for i, t in enumerate(truth) for j, p in enumerate(preds)),
+        (
+            (box_iou(t, p), i, j)
+            for i, t in enumerate(truth)
+            for j, p in enumerate(preds)
+        ),
         reverse=True,
     )
     matched, used = [None] * len(truth), set()
@@ -366,13 +378,22 @@ def yolo_mask_rows(samples, detections):
             raw = None if j is None or not det["masks"] else det["masks"][j]
             truth = truth_mask(part["points"], sample["size"])
             rows.append(
-                mask_row("yolo_mask", sample["record"].image_id, part["part"], raw, truth)
+                mask_row(
+                    "yolo_mask", sample["record"].image_id, part["part"], raw, truth
+                )
             )
     return rows
 
 
 def run_model(
-    name, weights_dir, images_zip, samples, device, out_dir, save_cutouts, detections=None
+    name,
+    weights_dir,
+    images_zip,
+    samples,
+    device,
+    out_dir,
+    save_cutouts,
+    detections=None,
 ):
     """SAM에 박스를 주고 정답 폴리곤과 비교한다. detections가 있으면 정답 박스 대신 검출 박스를 쓴다."""
     from PIL import Image

@@ -26,6 +26,7 @@
 ## 진행 메모
 
 - 2026-11-08: K-Fashion 50장으로 YOLO(DeepFashion2) 검출과 SAM 누끼 비교(`261108-0305-01-detection-segmentation-poc.md`). 기본은 YOLO 마스크만, SAM 2.1 tiny는 Flat Lay에서 비교 후 결정, Grounding DINO 보류.
+- 2026-11-08: 같은 50장으로 FashionCLIP 부위·카테고리 판정(`261108-0315-01-category-poc.md`). 태깅 입력은 마스크 방식으로 결정.
 
 ## 열린 질문
 

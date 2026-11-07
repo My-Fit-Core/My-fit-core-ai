@@ -158,4 +158,3 @@ def test_mask_row_uses_fill_as_default_and_zero_when_missing():
 def test_df2_classes_map_to_known_parts():
     assert len(DF2_TO_PART) == 13
     assert set(DF2_TO_PART.values()) <= set(PARTS)
-
