@@ -10,7 +10,7 @@
 | 완료 | 레포 초기 세팅 | - | - | `261009-1840-01-repo-initial-setup.md` |
 | 진행중 | 회의 확정 사항 정리 (추구미·카테고리·지연시간·추천 위치 등) | 전체 | `meeting-decisions-1013.md` | |
 | 대기 | 백엔드와 분석 API 계약 합의 | F-201~203 | `api-contract-v1.md` | |
-| 대기 | Vision 파이프라인 PoC (검출+누끼+태깅) | F-201, F-202, F-203 | `vision-pipeline-poc.md` | |
+| 진행중 | Vision 파이프라인 PoC (검출+누끼+태깅) | F-201, F-202, F-203 | `vision-pipeline-poc.md` | |
 
 ## 이후 작업
 
