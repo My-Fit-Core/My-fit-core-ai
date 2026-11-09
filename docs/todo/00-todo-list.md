@@ -23,3 +23,4 @@
 | 대기 | 내 옷장으로 따라입기 유사도 검색 | F-402 (P1) | (생성 예정) | |
 | 완료 | K-Fashion 데이터 준비와 FashionCLIP 스타일 평가 | F-203, F-302 | `kfashion-style-eval.md` | `261031-2152-01-kfashion-style-eval.md` |
 | 완료 | 추구미 설명형 프롬프트, 비율 보정, 반대 개념 축 측정 | F-203, F-302 | `aesthetic-display.md` | `261108-0230-01-aesthetic-display.md` |
+| 완료 | 추구미를 기본 스타일 5개로 재정의 (Y2K → 스트리트) | F-203, F-302 | `base-styles.md` | `261109-1840-01-base-styles.md` |
