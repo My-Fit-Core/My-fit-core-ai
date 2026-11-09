@@ -5,7 +5,7 @@
 "보정 점수"는 점수를 전체 평균으로 나눠 다시 합 1로 만든 값이다(issue #40).
 반대 개념 축(configs/aesthetics.yaml의 axes)도 같은 표본으로 점수를 낸다(issue #42).
 
-    python scripts/eval_aesthetics_on_kfashion.py [--prompt-sets outfit outfit_v2] [--seed 7]
+    python scripts/eval_aesthetics_on_kfashion.py [--prompt-sets outfit] [--seed 7]
 """
 
 import argparse
@@ -78,12 +78,54 @@ def top1_counts(rows, n_classes):
 
 
 def mapped_hit_rate(records, rows, mapped):
-    """연결 스타일 적중률. 주 스타일이 추구미 i에 연결된 이미지 중 1위가 i인 비율."""
+    """연결 스타일 적중률. 주 스타일이 추구미 i에 연결된 이미지 중 1위가 i인 비율.
+
+    연결 스타일이 없는 추구미는 None(계산 제외).
+    """
     rates = []
     for i, styles in enumerate(mapped):
+        if not styles:
+            rates.append(None)
+            continue
         picked = [row for r, row in zip(records, rows) if r.main in styles]
         rates.append(sum(argmax(row) == i for row in picked) / len(picked))
     return rates
+
+
+# 혼동을 따로 보는 추구미 쌍(key). 무지·기본템 쪽이 서로 겹칠 수 있다(issue #44).
+CONFUSION_PAIRS = [("casual", "street"), ("casual", "minimal")]
+
+
+def pair_confusion(records, rows, mapped, a, b):
+    """추구미 a와 b의 혼동.
+
+    - a_top1_on_b_styles: b에 연결된 스타일 사진 중 1위가 a인 비율(b에 연결이 없으면 None)
+    - b_top1_on_a_styles: 위의 반대
+    - top2_is_other: 1위가 a나 b인 사진 중 2위가 나머지 하나인 비율
+    """
+
+    def top1_share(styles, target):
+        picked = [row for r, row in zip(records, rows) if r.main in styles]
+        if not picked:
+            return None
+        return sum(argmax(row) == target for row in picked) / len(picked)
+
+    either = [row for row in rows if argmax(row) in (a, b)]
+    other = {a: b, b: a}
+    second = [sorted(range(len(row)), key=lambda c: -row[c])[1] for row in either]
+    return {
+        "a_top1_on_b_styles": top1_share(mapped[b], a),
+        "b_top1_on_a_styles": top1_share(mapped[a], b),
+        "top1_either": len(either),
+        "top2_is_other": sum(s == other[argmax(row)] for s, row in zip(second, either))
+        / len(either)
+        if either
+        else None,
+    }
+
+
+def fmt(x):
+    return "-" if x is None else f"{x:.2f}"
 
 
 def axis_value(logits):
@@ -99,7 +141,7 @@ def main():
         "--data-dir", type=Path, default=ROOT / "data/kfashion/validation"
     )
     parser.add_argument("--output-dir", type=Path)
-    parser.add_argument("--prompt-sets", nargs="+", default=["outfit", "outfit_v2"])
+    parser.add_argument("--prompt-sets", nargs="+", default=["outfit"])
     parser.add_argument("--per-style", type=int, default=50)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--batch-size", type=int, default=16)
@@ -119,6 +161,7 @@ def main():
     )
     aesthetics, axes = config["aesthetics"], config["axes"]
     names = [a["name"] for a in aesthetics]
+    keys = [a["key"] for a in aesthetics]
     mapped = [set(a["kfashion"]["styles"]) for a in aesthetics]
 
     # 모든 프롬프트 묶음을 한 번에 logit으로 받고, 묶음별로 나눠 softmax한다.
@@ -146,6 +189,17 @@ def main():
         result["top1_calibrated"] = top1_counts(calibrated, n)
         result["hit_rate"] = mapped_hit_rate(sampled, rows, mapped)
         result["hit_rate_calibrated"] = mapped_hit_rate(sampled, calibrated, mapped)
+        result["confusion"] = {
+            f"{a}_{b}": {
+                "raw": pair_confusion(
+                    sampled, rows, mapped, keys.index(a), keys.index(b)
+                ),
+                "calibrated": pair_confusion(
+                    sampled, calibrated, mapped, keys.index(a), keys.index(b)
+                ),
+            }
+            for a, b in CONFUSION_PAIRS
+        }
         report[ps] = result
 
         out = output_dir / ps
@@ -163,11 +217,12 @@ def main():
         print(f"\n[{ps}]\t" + "\t".join(names))
         print("1위 횟수\t" + "\t".join(map(str, result["top1"])))
         print("1위 횟수(보정)\t" + "\t".join(map(str, result["top1_calibrated"])))
-        print("적중률\t" + "\t".join(f"{x:.2f}" for x in result["hit_rate"]))
-        print(
-            "적중률(보정)\t"
-            + "\t".join(f"{x:.2f}" for x in result["hit_rate_calibrated"])
-        )
+        print("적중률\t" + "\t".join(map(fmt, result["hit_rate"])))
+        print("적중률(보정)\t" + "\t".join(map(fmt, result["hit_rate_calibrated"])))
+        print("전체 평균\t" + "\t".join(f"{x:.3f}" for x in result["overall"]))
+        for pair, values in result["confusion"].items():
+            for kind, c in values.items():
+                print(f"혼동 {pair} ({kind}): {c}")
 
     if len(top1_by_set) == 2:
         (a_raw, a_cal), (b_raw, b_cal) = top1_by_set
@@ -199,8 +254,13 @@ def main():
             f"\n{axis['low']}↔{axis['high']}: 문장 간 상관 "
             f"{report['axes'][axis['key']]['wording_correlation']:.2f}"
         )
-        for side, picked in ((axis["low"], ranked[:3]), (axis["high"], ranked[::-1][:3])):
-            print(f"  {side} 쪽: " + ", ".join(f"{s} {by_style[s]:.2f}" for s in picked))
+        for side, picked in (
+            (axis["low"], ranked[:3]),
+            (axis["high"], ranked[::-1][:3]),
+        ):
+            print(
+                f"  {side} 쪽: " + ", ".join(f"{s} {by_style[s]:.2f}" for s in picked)
+            )
 
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / "summary.json").write_text(

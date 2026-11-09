@@ -1,8 +1,7 @@
-# 추구미 및 카테고리 체계
-# 상태: 추구미 5개는 기획 확정, 프롬프트는 실험용 초안, 카테고리는 임시.
+# 추구미(기본 스타일) 및 카테고리 체계
+# 상태: 기본 스타일 5개는 기획 확정(issue #44에서 Y2K → 스트리트), 프롬프트는 실험용 초안, 카테고리는 임시.
 # key는 백엔드 DB와 동일하게 snake_case로 유지한다.
 # prompts.outfit: 코디 사진용(1단계 실험), prompts.item: 옷 단독 사진용(2단계 실험, 추후 작성).
-# prompts.outfit_v2: outfit을 실루엣·색·핵심 아이템 중심으로 다시 쓴 세트(issue #42).
 # kfashion: K-Fashion 스타일과의 잠정 연결. 근거는 docs/04-kfashion-validation.md 참고.
 
 aesthetics:
@@ -14,29 +13,21 @@ aesthetics:
         - "a ruffled pastel dress with a satin ribbon at the waist, feminine style"
         - "a pastel pink ruffled blouse with a ribbon tie, feminine style"
         - "a sweet outfit with ribbon bows and tiered ruffles in pastel colors, feminine style"
-      outfit_v2:
-        - "a fitted waist with a flowing skirt in delicate lace or chiffon, pastel and cream tones, feminine style"
-        - "a puff-sleeve blouse balanced with a flared midi skirt and small ribbon details, feminine style"
-        - "a light airy dress with ruffles and a cinched waist in soft pink and ivory, feminine style"
       item: []
     kfashion:
       styles: [로맨틱, 페미닌]
-  - key: y2k
-    name: Y2K
+  - key: street
+    name: 스트리트
     prompts:
       outfit:
-        - "a cropped baby tee and low-rise jeans with metallic accents, early 2000s Y2K fashion"
-        - "a butterfly print top with a low-rise denim mini skirt and chunky sandals, early 2000s Y2K fashion"
-        - "a shiny bright-colored crop top with low-rise cargo pants and a small shoulder bag, early 2000s Y2K fashion"
-        - "a velour tracksuit with tinted sunglasses and rhinestone accessories, early 2000s Y2K fashion"
-      outfit_v2:
-        - "a tight cropped top over low-rise flared jeans, playful bright colors with glitter and metallic shine, early 2000s Y2K fashion"
-        - "a baby tee with a low-rise mini skirt, butterfly clips, platform shoes and a tiny shoulder bag, early 2000s Y2K fashion"
-        - "a velour tracksuit with rhinestones and tinted sunglasses, bold and optimistic, early 2000s Y2K fashion"
+        - "an oversized graphic hoodie with baggy cargo pants and a baseball cap, street style"
+        - "an oversized sweatshirt with a big logo print, wide cargo pants and a snapback cap, street style"
+        - "a loose graphic print hoodie with cargo pants and a backwards cap, street style"
+        - "an oversized logo hoodie with baggy cargo pants and a cap, urban street style"
       item: []
     kfashion:
-      styles: [키치]
-      note: "근거 약함. K-Fashion에 대응 스타일이 없어 직접 수집 필요"
+      styles: [힙합, 스포티]
+      note: "K-Fashion 스트리트는 일상복에 가까워 우리 스트리트와 다르다(issue #44). 캐주얼에 연결"
   - key: minimal
     name: 미니멀
     prompts:
@@ -45,10 +36,6 @@ aesthetics:
         - "a plain white top with tailored black trousers, minimalist style"
         - "a monochrome outfit in beige with no patterns or logos, minimalist style"
         - "a sleek structured outfit in black and white with no decoration, minimalist style"
-      outfit_v2:
-        - "a few clean pieces with straight simple silhouettes, no prints or logos, only black, white, gray and beige, minimalist style"
-        - "a plain knit with straight-leg trousers in one neutral color, quiet and uncluttered, minimalist style"
-        - "a tailored coat over a plain top and slacks in muted neutrals with no accessories, minimalist style"
       item: []
     kfashion:
       styles: [모던, 소피스트케이티드]
@@ -61,10 +48,6 @@ aesthetics:
         - "multiple layers of worn, faded clothing in brown and olive tones, vintage layered style"
         - "a distressed wool vest layered over a long shirt and loose trousers in earth tones, vintage layered style"
         - "an aged corduroy jacket layered over several tops with a long skirt in muted earthy colors, vintage layered style"
-      outfit_v2:
-        - "several loose layers stacked together, a long shirt under a knit vest with a long skirt, faded brown, olive and mustard tones, vintage layered style"
-        - "a worn corduroy jacket over a patterned blouse and loose trousers, thrift-store textures in warm earth tones, vintage layered style"
-        - "a long cardigan layered over a printed dress with a scarf, aged fabrics in muted warm colors, vintage layered style"
       item: []
     kfashion:
       styles: [컨트리, 히피, 웨스턴]
@@ -74,29 +57,25 @@ aesthetics:
     name: 캐주얼
     prompts:
       outfit:
-        - "a relaxed everyday outfit with a t-shirt, basic jeans and sneakers, casual style"
-        - "a comfortable hoodie with sweatpants and running shoes, casual style"
-        - "a gray crewneck sweatshirt with basic jeans and white sneakers, casual style"
-        - "a zip-up hoodie with jogger pants and sneakers, casual style"
-      outfit_v2:
-        - "a relaxed loose fit with a t-shirt or sweatshirt, comfortable jeans and sneakers in everyday colors, casual style"
-        - "an easy athletic look with a hoodie, track pants and running shoes, casual style"
-        - "an oversized tee with wide pants and a cap, laid-back everyday wear, casual style"
+        - "a plain white t-shirt with basic straight jeans and simple sneakers in a regular fit, casual style"
+        - "a solid gray knit sweater with regular-fit chinos, simple everyday casual style"
+        - "a plain navy t-shirt with basic straight jeans in a regular fit, casual style"
+        - "a solid-color button-up shirt with regular-fit chinos and simple sneakers, casual style"
       item: []
     kfashion:
-      styles: [스포티, 힙합]
-      secondary: [스트리트]
+      styles: [스트리트, 톰보이]
+      note: "K-Fashion 스트리트는 일상복에 가까워 기본템인 캐주얼에 연결한다(issue #44)"
 
 # 추구미 점수 보정 (issue #42에서 채택). 점수를 prior로 나눠 다시 합 1로 만든다.
-# prior는 prompts.outfit 점수의 K-Fashion 표본 평균(시드 42, 23종 × 50장). 프롬프트를 바꾸면 다시 측정한다.
+# prior는 prompts.outfit 점수의 K-Fashion 표본 평균(시드 42, 23종 × 50장, issue #44에서 재계산). 프롬프트를 바꾸면 다시 측정한다.
 calibration:
   prompt_set: outfit
   prior:
-    feminine: 0.098
-    y2k: 0.056
-    minimal: 0.480
-    vintage_layered: 0.228
-    casual: 0.138
+    feminine: 0.107
+    street: 0.095
+    minimal: 0.492
+    vintage_layered: 0.231
+    casual: 0.075
 
 # 반대 개념 축 (issue #42 실험). 서비스 후보는 casual_formal, muted_colorful뿐이다. 값은 high 쪽일 확률(0~1).
 # prompts는 같은 축을 다른 문장으로 적은 [low, high] 쌍이다. 쌍끼리 결과가 비슷해야 안정적이다.
