@@ -59,7 +59,7 @@
       "category_conf": 0.93,
       "colors": [{"hex": "#2B2B2B", "ratio": 0.71}],
       "pattern": "solid",
-      "aesthetic_scores": {"dark_academia": 0.82},
+      "aesthetic_scores": {"feminine": 0.08, "street": 0.12, "minimal": 0.46, "vintage_layered": 0.12, "casual": 0.22},
       "embedding": [0.0]
     }
   ],
