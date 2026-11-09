@@ -346,3 +346,15 @@ python scripts/eval_aesthetics_on_kfashion.py --seed 42 --output-dir outputs/bas
 
 - 캐주얼 스타일 사진의 약 40%(보정 후)가 미니멀로 갑니다. 무지·기본템 쪽은 미니멀과 구분이 어렵습니다.
 - 자세한 수치는 `docs/reports/261109-1840-01-base-styles.md`에 있습니다.
+
+## 옷 한 벌 단위 추구미 (issue #35)
+
+```bash
+python scripts/eval_item_aesthetics_kfashion.py --seed 42    # 23종 × 20장, YOLO 마스크로 잘라낸 옷 단위
+```
+
+- 옷 한 벌 판정은 `prompts.item`을 씁니다. 평균 적중률은 `prompts.outfit`과 비슷하고(36~39%) 미니멀 쏠림이 없습니다.
+- 옷 종류 쏠림이 강합니다(청바지 → 캐주얼 84~88%, 후드티 → 스트리트 80~90%). MVP에서는 그대로 둡니다.
+- 정답이 코디 단위 라벨이라 옷 단위 적중률은 낮게 나옵니다.
+
+자세한 수치는 `docs/reports/261110-0117-01-item-prompts.md`에 있습니다.

@@ -73,9 +73,10 @@ def test_prompt_sets_and_axes_are_complete():
     )
     for a in config["aesthetics"]:
         assert a["prompts"]["outfit"], a["key"]
-    prior = config["calibration"]["prior"]
-    assert set(prior) == {a["key"] for a in config["aesthetics"]}
-    assert sum(prior.values()) == pytest.approx(1, abs=0.01)
+    for section in ("calibration", "calibration_item"):
+        prior = config[section]["prior"]
+        assert set(prior) == {a["key"] for a in config["aesthetics"]}, section
+        assert sum(prior.values()) == pytest.approx(1, abs=0.01), section
     for axis in config["axes"]:
         assert len(axis["prompts"]) >= 2, axis["key"]
         assert all(len(pair) == 2 for pair in axis["prompts"]), axis["key"]
