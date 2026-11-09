@@ -41,7 +41,7 @@
   - 백엔드에 두면 추천 코드를 패키지로 공유해야 해서 배포가 복잡해진다.
   - 규칙 기반이라 GPU가 필요 없어 AI 서버 부담이 작다.
 - [ ] **추천 엔드포인트 초안** (경로·필드는 `/v0/analyze`처럼 `/v0/` 접두사, snake_case)
-  - `POST /v0/recommend`: 코디 세트 3종 생성. 요청 `job_id`, `weather`, `aesthetic`, `wardrobe`, 응답 `sets[]`(각 세트는 `item_ids`와 `score`)
+  - `POST /v0/recommend`: 코디 세트 3종 생성. 요청 `job_id`, `weather`, `aesthetic`, `wardrobe`, `schedule`(캘린더 일정, 261109 확정), 응답 `sets[]`(각 세트는 `item_ids`와 `score`)
   - `POST /v0/recommend/swap`: 슬롯 1개 대체 후보. 요청은 위 필드에 `outfit_item_ids`와 교체할 `slot`(category 대분류)을 더하고, 응답은 `candidates[]` 랭킹
   - 필드 이름과 응답 형식은 `app/schemas.py` 스타일을 따르며, 합의 후 v1에서 확정
   - 열린 질문: 추천은 규칙 기반이라 빠르므로 동기 응답으로 할지(이 경우 `job_id` 불필요) 회의에서 결정
