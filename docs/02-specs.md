@@ -87,7 +87,10 @@
   - 캐주얼은 테마 없는 기본템(무지, 기본핏), 스트리트는 오버핏·그래픽·로고·카고·캡이다.
   - 우리 스트리트 ≠ K-Fashion 스트리트. K-Fashion 스트리트는 일상복에 가까워 캐주얼에 연결하고, 우리 스트리트는 K-Fashion 힙합·스포티에 연결한다(잠정, `261109-1840-01-base-styles.md`).
   - Y2K 같은 마이크로 트렌드는 2차 로드맵으로 미룬다. K-Fashion에 대응 스타일이 없어 이미지를 직접 모아야 한다.
-- 추구미 점수: FashionCLIP 프롬프트 세트 `outfit`의 점수를 `calibration.prior`(고정값)로 나눠 다시 합 1로 보정한다. 근거는 `docs/reports/261108-0230-01-aesthetic-display.md`.
+- 추구미 점수
+  - 코디 사진: FashionCLIP 프롬프트 세트 `outfit`의 점수를 `calibration.prior`(고정값)로 나눠 다시 합 1로 보정한다. 근거는 `docs/reports/261108-0230-01-aesthetic-display.md`.
+  - 옷 한 벌(API `aesthetic_scores`): 프롬프트 세트 `item`을 쓰고 보정하지 않는다. `calibration_item.prior`는 기록만 한다. 근거는 `docs/reports/261110-0117-01-item-prompts.md`.
+  - 옷 종류 쏠림(예: 청바지 → 캐주얼, 후드티 → 스트리트)은 MVP에서 그대로 둔다.
 - 카테고리 체계: 상의/하의/아우터/신발/잡화 + 세부 분류 `TBD`. 백엔드 ERD enum과 반드시 동일하게 유지.
 - 주 타겟이 1020대 여성이므로 원피스, 스커트 세부, 가방·액세서리를 세분화한다.
 

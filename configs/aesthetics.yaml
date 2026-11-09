@@ -1,7 +1,8 @@
 # 추구미(기본 스타일) 및 카테고리 체계
 # 상태: 기본 스타일 5개는 기획 확정(issue #44에서 Y2K → 스트리트), 프롬프트는 실험용 초안, 카테고리는 임시.
 # key는 백엔드 DB와 동일하게 snake_case로 유지한다.
-# prompts.outfit: 코디 사진용(1단계 실험), prompts.item: 옷 단독 사진용(2단계 실험, 추후 작성).
+# prompts.outfit: 코디 사진용(1단계 실험), prompts.item: 옷 한 벌 사진용(2단계 실험, issue #35).
+# prompts.item은 옷 한 벌만 보이는 사진(누끼)을 가정한다. 신발·모자는 검출 대상이 아니라 넣지 않는다.
 # kfashion: K-Fashion 스타일과의 잠정 연결. 근거는 docs/04-kfashion-validation.md 참고.
 
 aesthetics:
@@ -13,7 +14,11 @@ aesthetics:
         - "a ruffled pastel dress with a satin ribbon at the waist, feminine style"
         - "a pastel pink ruffled blouse with a ribbon tie, feminine style"
         - "a sweet outfit with ribbon bows and tiered ruffles in pastel colors, feminine style"
-      item: []
+      item:
+        - "a pastel ruffled blouse with a ribbon tie, feminine style"
+        - "a flowy floral midi skirt in soft pink, feminine style"
+        - "a lace-trimmed dress with puff sleeves, feminine style"
+        - "a cropped cardigan with pearl buttons in pastel colors, feminine style"
     kfashion:
       styles: [로맨틱, 페미닌]
   - key: street
@@ -24,7 +29,11 @@ aesthetics:
         - "an oversized sweatshirt with a big logo print, wide cargo pants and a snapback cap, street style"
         - "a loose graphic print hoodie with cargo pants and a backwards cap, street style"
         - "an oversized logo hoodie with baggy cargo pants and a cap, urban street style"
-      item: []
+      item:
+        - "an oversized graphic hoodie, street style"
+        - "baggy cargo pants with large side pockets, street style"
+        - "an oversized sweatshirt with a big logo print, street style"
+        - "an oversized varsity bomber jacket with patches, street style"
     kfashion:
       styles: [힙합, 스포티]
       note: "K-Fashion 스트리트는 일상복에 가까워 우리 스트리트와 다르다(issue #44). 캐주얼에 연결"
@@ -36,7 +45,11 @@ aesthetics:
         - "a plain white top with tailored black trousers, minimalist style"
         - "a monochrome outfit in beige with no patterns or logos, minimalist style"
         - "a sleek structured outfit in black and white with no decoration, minimalist style"
-      item: []
+      item:
+        - "tailored black wide-leg trousers with a clean crease, minimalist style"
+        - "a structured single-color blazer with clean lines, minimalist style"
+        - "a sleek monochrome long coat in beige, minimalist style"
+        - "a simple sleeveless slip dress in black, minimalist style"
     kfashion:
       styles: [모던, 소피스트케이티드]
       note: "근거 약함. 미니멀 쏠림의 영향을 받음"
@@ -48,7 +61,11 @@ aesthetics:
         - "multiple layers of worn, faded clothing in brown and olive tones, vintage layered style"
         - "a distressed wool vest layered over a long shirt and loose trousers in earth tones, vintage layered style"
         - "an aged corduroy jacket layered over several tops with a long skirt in muted earthy colors, vintage layered style"
-      item: []
+      item:
+        - "a worn corduroy jacket in brown, vintage layered style"
+        - "a faded vintage knit vest in earthy tones, vintage layered style"
+        - "a long patterned prairie skirt in muted colors, vintage layered style"
+        - "an aged oversized cardigan in olive and mustard, vintage layered style"
     kfashion:
       styles: [컨트리, 히피, 웨스턴]
       excluded: [밀리터리]
@@ -61,7 +78,11 @@ aesthetics:
         - "a solid gray knit sweater with regular-fit chinos, simple everyday casual style"
         - "a plain navy t-shirt with basic straight jeans in a regular fit, casual style"
         - "a solid-color button-up shirt with regular-fit chinos and simple sneakers, casual style"
-      item: []
+      item:
+        - "a plain white t-shirt in a regular fit, casual style"
+        - "a solid gray knit sweater, simple everyday casual style"
+        - "basic straight-leg blue jeans, casual style"
+        - "a solid-color button-up shirt in a regular fit, casual style"
     kfashion:
       styles: [스트리트, 톰보이]
       note: "K-Fashion 스트리트는 일상복에 가까워 기본템인 캐주얼에 연결한다(issue #44)"
@@ -76,6 +97,18 @@ calibration:
     minimal: 0.492
     vintage_layered: 0.231
     casual: 0.075
+
+# 옷 한 벌용(prompts.item) 점수의 K-Fashion 표본 평균(시드 42, 23종 × 20장, 옷 649벌, issue #35).
+# 기록만 하고 적용하지 않는다: 보정해도 1위가 거의 바뀌지 않고, 시드 간 차이가 최대 0.034로 불안정하다.
+calibration_item:
+  prompt_set: item
+  applied: false
+  prior:
+    feminine: 0.165
+    street: 0.221
+    minimal: 0.146
+    vintage_layered: 0.191
+    casual: 0.276
 
 # 반대 개념 축 (issue #42 실험). 서비스 후보는 casual_formal, muted_colorful뿐이다. 값은 high 쪽일 확률(0~1).
 # prompts는 같은 축을 다른 문장으로 적은 [low, high] 쌍이다. 쌍끼리 결과가 비슷해야 안정적이다.

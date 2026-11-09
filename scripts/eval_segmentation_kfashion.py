@@ -15,6 +15,7 @@ import random
 import sys
 import time
 import zipfile
+from collections import Counter
 from pathlib import Path
 from statistics import mean, median
 
@@ -180,8 +181,11 @@ def summarize(rows, seconds, post_seconds=()):
     }
 
 
-def pick_samples(data_dir, n, seed):
-    """옷이 2벌 이상 라벨된 이미지를 n장 고른다. 내용이 같은 이미지는 평가 기준대로 처리한다."""
+def pick_samples(data_dir, n, seed, min_parts=2, per_style=None):
+    """옷이 min_parts벌 이상 라벨된 이미지를 n장 고른다. 내용이 같은 이미지는 평가 기준대로 처리한다.
+
+    per_style을 주면 n 대신 주 스타일마다 per_style장씩 고른다.
+    """
     labels_zip = find_zip(data_dir / "labels")
     images_zip = find_zip(data_dir / "images")
     kept, _ = dedupe(load_records(labels_zip, images_zip))
@@ -195,16 +199,20 @@ def pick_samples(data_dir, n, seed):
             for i in labels.infolist()
             if i.filename.endswith(".json")
         }
+        counts = Counter()
         for record in candidates:
+            if per_style and counts[record.main] >= per_style:
+                continue
             doc = json.loads(labels.read(members[str(record.image_id)]).decode("utf-8"))
             parts = parts_from_label(doc)
-            if len(parts) >= 2:
+            if len(parts) >= min_parts:
                 size = (
                     doc["이미지 정보"]["이미지 너비"],
                     doc["이미지 정보"]["이미지 높이"],
                 )
                 samples.append({"record": record, "parts": parts, "size": size})
-                if len(samples) == n:
+                counts[record.main] += 1
+                if not per_style and len(samples) == n:
                     break
     return images_zip, samples
 
