@@ -60,7 +60,7 @@ def analyze(req: AnalyzeRequest) -> AnalyzeResult:
         model_version=MODEL_VERSION,
         items=[
             DetectedItem(
-                bbox=[40, 60, 420, 520],
+                bbox=[0.08, 0.12, 0.84, 0.88],
                 category="top.knit",
                 category_conf=0.93,
                 colors=[ColorInfo(hex="#2B2B2B", ratio=0.71)],
