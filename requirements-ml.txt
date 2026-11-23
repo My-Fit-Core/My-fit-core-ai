@@ -5,7 +5,6 @@ torchvision
 transformers
 open_clip_torch
 ultralytics
-pillow
 numpy
 scikit-learn
 opencv-python-headless
