@@ -100,6 +100,6 @@
 
 ## G. 문서 정리와 후속
 
-- [ ] T22: 문서의 "15대 추구미"·TPO 표현을 현재 결정(5개 먼저·15종은 2차, TPO 제외)에 맞게 정리 — `03-product-plan.md`, `01-folder-architecture.md` 등 (이슈 #38)
+- [x] T22: 문서의 "15대 추구미"·TPO 표현을 현재 결정(5개 먼저·15종은 2차, TPO 제외)에 맞게 정리 — `03-product-plan.md`, `01-folder-architecture.md` 등 (이슈 #38) — PR #64, `261123-1643-01-docs-wording-cleanup.md`
   - 완료 기준: 노션 원본과 달라지는 부분은 Report에 보고(원본 수정은 사람이).
 - [ ] T23 (MVP 이후): linear probe로 캐주얼↔미니멀 혼동 개선(#34), 카테고리별 평균 보정, 추천에서 색 조합 활용, 등록 확인 단계 워싱 태그
