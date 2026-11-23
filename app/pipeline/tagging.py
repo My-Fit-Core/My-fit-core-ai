@@ -43,11 +43,25 @@ def _load_configs() -> tuple[list, dict]:
 
 
 @functools.cache
+def _get_device() -> str:
+    """MPS(Apple Silicon) → CUDA → CPU 순으로 선택."""
+    import torch
+
+    if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        return "mps"
+    if torch.cuda.is_available():
+        return "cuda"
+    return "cpu"
+
+
+@functools.cache
 def load_tagger():
     """프로세스당 1회 로드. 서버 기동 시 미리 호출하는 연결은 T12."""
     import open_clip
 
+    device = _get_device()
     model, _, preprocess = open_clip.create_model_and_transforms(MODEL_NAME)
+    model = model.to(device)
     model.eval()
     tokenizer = open_clip.get_tokenizer(MODEL_NAME)
     return model, preprocess, tokenizer
@@ -57,8 +71,11 @@ def _encode_texts(model, tokenizer, texts: list[str]) -> np.ndarray:
     """L2 정규화된 텍스트 임베딩, shape (N, D)."""
     import torch
 
+    device = _get_device()
     with torch.no_grad():
         tokens = tokenizer(texts)
+        if isinstance(tokens, torch.Tensor):
+            tokens = tokens.to(device)
         feats = model.encode_text(tokens).float()
         feats = feats / feats.norm(dim=-1, keepdim=True)
     return feats.cpu().numpy()
@@ -68,8 +85,9 @@ def _encode_image(model, preprocess, image: Image.Image) -> np.ndarray:
     """L2 정규화된 이미지 임베딩, shape (1, D)."""
     import torch
 
+    device = _get_device()
     with torch.no_grad():
-        tensor = preprocess(image).unsqueeze(0)
+        tensor = preprocess(image).unsqueeze(0).to(device)
         feat = model.encode_image(tensor).float()
         feat = feat / feat.norm(dim=-1, keepdim=True)
     return feat.cpu().numpy()

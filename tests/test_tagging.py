@@ -13,6 +13,7 @@ from app.pipeline.tagging import (
     _PATTERN_PROMPTS,
     MODEL_VERSION,
     TagResult,
+    _get_device,
     _softmax,
     crop_item,
 )
@@ -94,6 +95,13 @@ def test_pattern_labels_complete():
     assert set(_PATTERN_PROMPTS.keys()) == {
         "solid", "stripe", "check", "dot", "floral", "animal", "graphic", "other"
     }
+
+
+def test_get_device_returns_valid():
+    """torch 없으면 skip, 있으면 유효한 device 문자열 반환."""
+    pytest.importorskip("torch", reason="torch 없으면 skip")
+    device = _get_device()
+    assert device in ("cpu", "cuda", "mps")
 
 
 # ── tag_item 통합 (open_clip 필요) ───────────────────────────────

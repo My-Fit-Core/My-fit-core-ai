@@ -34,7 +34,10 @@ class Detection:
 
 @functools.cache
 def load_detector(weights: Path = WEIGHTS_PATH):
-    """프로세스당 1회만 로드한다. 서버 기동 시 미리 부르는 연결은 T12."""
+    """프로세스당 1회만 로드한다. 서버 기동 시 미리 부르는 연결은 T12.
+
+    ultralytics가 MPS(Apple Silicon)·CUDA·CPU를 자동 감지한다 (#37).
+    """
     from ultralytics import YOLO
 
     return YOLO(str(weights))
