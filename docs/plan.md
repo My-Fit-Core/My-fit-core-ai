@@ -57,7 +57,7 @@
 | 항목 | 결정 | 근거 |
 | --- | --- | --- |
 | 추구미 | 5개: `feminine`, `street`, `minimal`, `vintage_layered`, `casual`. Y2K는 street로 교체(백엔드에 11/23 전달 완료), casual은 테마 없는 기본템. 일반 스타일 + 마이크로 트렌드 2계층 구조 | `261109-1840-01-base-styles.md`, 10/12 회의 안건 1 |
-| 추구미 점수 의미 | 옷 한 벌은 `prompts.item`, 보정 없음, 합 1. 코디 점수 = 옷 점수의 합 | `261110-0117-01-item-prompts.md` |
+| 추구미 점수 의미 | 옷 한 벌은 `prompts.item`, 보정 없음, 합 1. 코디 점수 = 옷 점수의 **평균**(추구미 점수가 있는 옷만). 합이면 아이템 수가 많은 코디가 유리해진다 | `261110-0117-01-item-prompts.md`, `261123-1652-01-recommend-scoring-v0.md` |
 | 옷 종류 쏠림 | 청바지→캐주얼, 후드→스트리트는 MVP에서 유지 | 위 Report |
 | 카테고리 판정 | YOLO 부위 + FashionCLIP 상위 3개 후보, 사용자가 등록 확인 단계에서 확정 | `261108-0315-01-category-poc.md` |
 | 카테고리 형식 | **대분류 `category`와 소분류 `subcategory` 필드 두 개로 분리**. 대분류 6종(백엔드 제안): `outerwear`, `top`, `bottom`, `shoes`, `bag`, `accessory`. 점 표기(`top.knit`)는 폐기 | 10/12 회의 안건 7 |
@@ -124,7 +124,7 @@ AI 서버가 반환할 에러 코드는 백엔드 임시안(§4)을 기준으로
 AI 파트가 답해야 하는 것
 - 사진 1장당 최대 옷 수(`max_det`): **6벌**로 답 예정(승인 조건과 동일). 백엔드가 누끼 URL 개수를 이 값으로 제한.
 - 6종 밖 라벨(원피스 등)을 `category`에 그대로 보내도 되는지: 원피스는 1020 여성 타겟에 중요하므로 대분류에 `dress` 추가 요청을 제안.
-- 소분류 목록: AI가 정해서 전달. `configs/aesthetics.yaml`의 `categories`에 초안이 있다(대분류 이름이 `outer`·`accessory(bag 포함)`·`dress` 포함으로 백엔드 6종과 다름 → 맞춰야 함).
+- 소분류 목록: AI가 정해서 전달. `configs/categories.yaml`에 `category-taxonomy.md` 안 A 초안이 있다(T14에서 `aesthetics.yaml`의 옛 블록을 옮김, 확정 아님).
 - 입력 규격 최종값: 긴 변 2048px 상한을 유지할지(20MB로 올리면 큰 사진이 올 수 있음), WebP 디코딩 지원.
 
 백엔드에 확인할 것

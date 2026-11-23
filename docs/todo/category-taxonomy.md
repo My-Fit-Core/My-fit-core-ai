@@ -8,19 +8,19 @@
 
 ## 목표
 
-대분류·소분류 목록과 MVP 검출 범위를 정해 `configs/aesthetics.yaml` `categories`와 백엔드 ERD enum을 맞춘다. 이게 정해져야 T6(스키마 v1), T11(태깅), T14(추천)가 시작된다.
+대분류·소분류 목록과 MVP 검출 범위를 정해 `configs/categories.yaml`과 백엔드 ERD enum을 맞춘다. 이게 정해져야 T6(스키마 v1), T11(태깅), T14(추천)가 시작된다.
 
 ## 완료 조건
 
 - [ ] `dress` 대분류 추가 여부 결정
 - [ ] 소분류 목록 결정, 백엔드에 전달
 - [ ] MVP 검출 범위 결정, `plan.md` §3에 기록
-- [ ] `configs/aesthetics.yaml` `categories`를 확정 목록으로 수정, 백엔드 enum과 일치 확인
+- [ ] `configs/categories.yaml`(T14에서 안 A 초안으로 만듦)을 확정 목록으로 수정, 백엔드 enum과 일치 확인. 소분류가 바뀌면 `configs/recommend.yaml` `warmth`도 함께 고친다
 
 ## 맥락
 
 - 확정: `category`(대분류)와 `subcategory`(소분류) 두 필드, 대분류 6종 `outerwear`, `top`, `bottom`, `shoes`, `bag`, `accessory`(백엔드 제안, 10/12 회의 안건 7).
-- 현재 `configs/aesthetics.yaml`의 대분류 이름은 `top`, `bottom`, `dress`, `outer`, `shoes`, `accessory`(bag 포함)로 백엔드 6종과 다르다.
+- 기존 `configs/aesthetics.yaml`의 `categories` 블록(`outer`, bag 포함 `accessory`)은 T14에서 지우고 안 A 초안을 `configs/categories.yaml`로 옮겼다(확정 아님).
 - 현재 검출기(DeepFashion2 YOLO)의 클래스는 13종 의류뿐이다(가중치에서 확인): `short_sleeved_shirt`, `long_sleeved_shirt`, `short_sleeved_outwear`, `long_sleeved_outwear`, `vest`, `sling`, `shorts`, `trousers`, `skirt`, `short_sleeved_dress`, `long_sleeved_dress`, `vest_dress`, `sling_dress`. 신발·가방·액세서리 클래스는 없다.
 - 세부 카테고리는 FashionCLIP 1위 정확도가 약 52%, 상위 3개가 약 75%라 상위 3개 후보를 보여 주고 사용자가 고르는 방식이다(`261108-0315-01-category-poc.md`).
 

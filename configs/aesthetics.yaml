@@ -132,10 +132,4 @@ axes:
       - ["a subtle understated outfit", "a bold statement outfit that stands out"]
       - ["simple quiet clothes with no eye-catching details", "eye-catching clothes with dramatic details"]
 
-categories:  # TBD: 백엔드 ERD enum과 맞출 것
-  top: [tshirt, shirt, blouse, knit, hoodie, sleeveless]
-  bottom: [jeans, slacks, shorts, mini_skirt, long_skirt]
-  dress: [mini_dress, long_dress]
-  outer: [jacket, blazer, coat, cardigan, padding]
-  shoes: [sneakers, flats, loafers, heels, boots, sandals]
-  accessory: [bag, hat, scarf, jewelry]
+# 카테고리 체계는 configs/categories.yaml로 옮겼다(T14, 확정은 T2).
