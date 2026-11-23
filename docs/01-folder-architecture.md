@@ -19,7 +19,9 @@ myfit-ai/
 │   └── pipeline/             # 검출 → 분할/누끼 → 태깅 파이프라인
 ├── recommend/                # 날씨 × 추구미 코디 추천 로직 (GPU 불필요, TPO는 2차)
 ├── configs/
-│   ├── aesthetics.yaml       # 추구미(기본 5개) 정의, CLIP 프롬프트, 카테고리 체계
+│   ├── aesthetics.yaml       # 추구미(기본 5개) 정의, CLIP 프롬프트
+│   ├── categories.yaml       # 카테고리 대분류·소분류 (초안, T2 확정 전)
+│   ├── recommend.yaml        # 추천 규칙: 따뜻함, 기온 구간, 비·바람, 가중치 (초안)
 │   ├── image_input.yaml      # 입력 이미지 형식·용량
 │   └── kfashion_styles.yaml  # K-Fashion 스타일 23종 프롬프트(평가용)
 ├── notebooks/                # PoC·실험 (출력 지우고 커밋)

@@ -1,0 +1,13 @@
+# 카테고리 체계 [초안, T2 미확정]
+# 출처: docs/todo/category-taxonomy.md 안 A (대분류 7종 = 백엔드 제안 6종 + dress).
+# 확정 전이다. 백엔드 ERD enum과 맞추면 이 파일만 고친다(키는 snake_case).
+# category: 대분류, 값 목록: 소분류(subcategory)
+
+categories:
+  top: [tshirt, shirt, blouse, knit, hoodie, sweatshirt, sleeveless]
+  bottom: [jeans, slacks, shorts, mini_skirt, long_skirt]
+  dress: [mini_dress, long_dress]
+  outerwear: [jacket, blazer, coat, cardigan, padding]
+  shoes: [sneakers, flats, loafers, heels, boots, sandals]
+  bag: [shoulder_bag, tote_bag, backpack, crossbody_bag]
+  accessory: [hat, scarf, jewelry]

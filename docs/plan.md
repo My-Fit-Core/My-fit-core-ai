@@ -124,7 +124,7 @@ AI 서버가 반환할 에러 코드는 백엔드 임시안(§4)을 기준으로
 AI 파트가 답해야 하는 것
 - 사진 1장당 최대 옷 수(`max_det`): **6벌**로 답 예정(승인 조건과 동일). 백엔드가 누끼 URL 개수를 이 값으로 제한.
 - 6종 밖 라벨(원피스 등)을 `category`에 그대로 보내도 되는지: 원피스는 1020 여성 타겟에 중요하므로 대분류에 `dress` 추가 요청을 제안.
-- 소분류 목록: AI가 정해서 전달. `configs/aesthetics.yaml`의 `categories`에 초안이 있다(대분류 이름이 `outer`·`accessory(bag 포함)`·`dress` 포함으로 백엔드 6종과 다름 → 맞춰야 함).
+- 소분류 목록: AI가 정해서 전달. `configs/categories.yaml`에 `category-taxonomy.md` 안 A 초안이 있다(T14에서 `aesthetics.yaml`의 옛 블록을 옮김, 확정 아님).
 - 입력 규격 최종값: 긴 변 2048px 상한을 유지할지(20MB로 올리면 큰 사진이 올 수 있음), WebP 디코딩 지원.
 
 백엔드에 확인할 것

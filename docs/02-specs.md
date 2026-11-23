@@ -123,7 +123,7 @@
 - 백엔드가 날씨 + 추구미 + 옷장 목록을 한 요청에 담아 보낸다. AI 서버는 날씨를 조회하지 않고 DB에도 접근하지 않는다.
 - 요청·응답 필드는 T6에서 스키마로 정한다. 옷장 아이템에 임베딩을 담을지는 `TBD`.
 
-## 4. 데이터 기준 (configs/aesthetics.yaml)
+## 4. 데이터 기준 (configs/aesthetics.yaml, configs/categories.yaml)
 
 - 사용자에게 보이는 추구미: 기본 스타일 5개 (페미닌, 스트리트, 미니멀, 빈티지 레이어드, 캐주얼). 2026-11-09 기획 합의로 Y2K를 스트리트로 바꿨다(issue #44).
   - 캐주얼은 테마 없는 기본템(무지, 기본핏), 스트리트는 오버핏·그래픽·로고·카고·캡이다.
@@ -133,7 +133,7 @@
   - 코디 사진: FashionCLIP 프롬프트 세트 `outfit`의 점수를 `calibration.prior`(고정값)로 나눠 다시 합 1로 보정한다. 근거는 `docs/reports/261108-0230-01-aesthetic-display.md`.
   - 옷 한 벌(API `aesthetic_scores`): 프롬프트 세트 `item`을 쓰고 보정하지 않는다. `calibration_item.prior`는 기록만 한다. 근거는 `docs/reports/261110-0117-01-item-prompts.md`.
   - 옷 종류 쏠림(예: 청바지 → 캐주얼, 후드티 → 스트리트)은 MVP에서 그대로 둔다.
-- 카테고리 체계: 대분류 `category`와 소분류 `subcategory` 두 필드(10/12 회의 안건 7). 백엔드 ERD enum과 반드시 동일하게 유지.
+- 카테고리 체계: 대분류 `category`와 소분류 `subcategory` 두 필드(10/12 회의 안건 7). 백엔드 ERD enum과 반드시 동일하게 유지. 목록은 `configs/categories.yaml`에 둔다(현재 `category-taxonomy.md` 안 A 초안, 확정 아님).
   - 대분류 6종(백엔드 제안, 안건 7): `outerwear`, `top`, `bottom`, `shoes`, `bag`, `accessory`
   - 원피스(`dress`) 대분류 추가 여부: `TBD`
   - 소분류 목록: `TBD` (AI가 정해서 백엔드에 전달)
