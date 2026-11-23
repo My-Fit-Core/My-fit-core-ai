@@ -24,7 +24,7 @@ class ColorInfo(BaseModel):
 
 
 class DetectedItem(BaseModel):
-    bbox: list[int] = Field(description="[x1, y1, x2, y2]", min_length=4, max_length=4)
+    bbox: list[float] = Field(description="정규화 좌표 [x_min, y_min, x_max, y_max], 0~1 (plan §4)", min_length=4, max_length=4)
     mask_path: str | None = Field(default=None, description="누끼 PNG 저장 경로")
     category: str
     category_conf: float = Field(ge=0, le=1)
