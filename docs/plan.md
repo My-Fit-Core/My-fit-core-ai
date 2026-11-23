@@ -139,7 +139,7 @@ AI 파트가 답해야 하는 것
 
 ## 9. 문서 불일치·위험 (보고)
 
-- **검출 범위 불일치**: 백엔드 대분류 6종에는 `shoes`, `bag`, `accessory`가 있는데, 현재 검출기(DeepFashion2 YOLO)와 K-Fashion 라벨은 상의·하의·아우터·원피스 중심이다. PoC도 "신발과 잡화는 라벨이 없어 평가하지 않는다"(`261108-0305-01-detection-segmentation-poc.md`), `configs/aesthetics.yaml`도 "신발·모자는 검출 대상이 아니다"라고 적혀 있다. 3주 안에 MVP 검출을 상의·하의·아우터·원피스로 한정할지 결정이 필요하다 `[미정]`. (DeepFashion2 클래스 목록은 기억 기준이라 실제 가중치의 클래스로 확인 필요.)
+- **검출 범위 불일치**: 백엔드 대분류 6종에는 `shoes`, `bag`, `accessory`가 있는데, 현재 검출기(DeepFashion2 YOLO)와 K-Fashion 라벨은 상의·하의·아우터·원피스 중심이다. PoC도 "신발과 잡화는 라벨이 없어 평가하지 않는다"(`261108-0305-01-detection-segmentation-poc.md`), `configs/aesthetics.yaml`도 "신발·모자는 검출 대상이 아니다"라고 적혀 있다. 3주 안에 MVP 검출을 상의·하의·아우터·원피스로 한정할지 결정이 필요하다 `[미정]`. (DeepFashion2 클래스 13종은 실제 가중치에서 확인함, 11/23: 상의·아우터·하의·원피스 계열만 있다.)
 - `03-product-plan.md`, `01-folder-architecture.md`, 노션 기획 문서에 "15대 추구미" 표현이 남아 있다(이슈 #38). 현재 결정은 5개 먼저, 15종 원안은 2차.
 - `03-product-plan.md`는 "날씨 × 추구미 × 일정(TPO)"인데 1차 MVP는 TPO 제외로 합의됨.
 - `02-specs.md`의 입력 규격(5MB, JPEG/PNG), 카테고리 `TBD`, 추천 위치·결과 전달 방식 `TBD`가 10/12 회의 결정과 어긋난다(T24에서 갱신).
