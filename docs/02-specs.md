@@ -69,8 +69,9 @@
 
 ### 입력 이미지 규칙
 
-- 형식: JPEG/PNG. HEIC는 프론트에서 JPEG로 변환한다.
-- 크기: 긴 변 최대 2048px, 최대 5MB. 짧은 변이 512px 미만이면 안내한다.
+- 형식: JPEG/PNG/WebP. HEIC는 프론트에서 JPEG로 변환한다.
+- 크기: 긴 변 최대 2048px, 최대 20MB. 짧은 변이 512px 미만이면 안내한다.
+- 형식·용량 값은 `configs/image_input.yaml`에서 읽는다(10/12 회의 안건 9). 검증 코드는 `app/pipeline/image_input.py`.
 - 회전 보정과 EXIF 제거는 프론트에서 업로드 전에 하고, AI 서버도 한 번 더 확인한다.
 
 ### 좌표 규칙
