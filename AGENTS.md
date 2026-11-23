@@ -9,6 +9,8 @@ MyFit:Core(추구미 기반 코디 추천 앱)의 **AI 서버 레포**입니다.
 다중 의류 검출·누끼·태깅, 날씨 × 추구미 코디 추천, '내 옷장으로 따라입기' 유사도 검색을 담당합니다.
 백엔드(Supabase + Vercel)는 별도 레포이며, 이 레포는 백엔드가 비동기로 호출하는 추론 API를 제공합니다.
 
+Notion 페이지: https://app.notion.com/p/3c273aa7bb8d80b990d2ffa9a80cc17b (Activities DB의 "P-프로젝트". 개발 일지는 이 페이지의 "개발 일지" DB에 쓴다)
+
 ## 작업 시작 전 읽는 순서
 
 1. `docs/03-product-plan.md` — 무엇을, 왜 만드는가 (제품 목적·범위·승인 조건)
