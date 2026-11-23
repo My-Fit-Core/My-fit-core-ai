@@ -2,7 +2,7 @@ import copy
 
 import yaml
 
-from recommend.scoring import CONFIG, ROOT, Item, Weather, recommend
+from recommend.scoring import CONFIG, ROOT, Item, Weather, recommend, swap
 
 MILD = Weather(temp_c=20, precip_type="none", humidity=50, wind_ms=2, precip_prob=10)
 
@@ -177,3 +177,83 @@ def test_missing_temperature_still_applies_rain():
 def test_rain_avoid_names_exist():
     known = {s for subs in CONFIG["categories"].values() for s in subs}
     assert set(CONFIG["rain"]["avoid"]) <= known
+
+
+# --- swap (T16) ---
+OUTFIT = ["t_tee", "b_jeans", "s_sneak"]
+
+
+def test_swap_ranks_same_slot_candidates():
+    res = swap(WARDROBE, MILD, "minimal", OUTFIT, "top")
+    ids = [c.item_id for c in res.candidates]
+    assert set(ids) == {"t_blouse", "t_hood", "t_knit"}  # 현재 상의는 제외
+    assert ids[0] == "t_knit"  # minimal 점수가 가장 높은 상의
+    scores = [c.outfit.score for c in res.candidates]
+    assert scores == sorted(scores, reverse=True)
+    for c in res.candidates:  # 다른 슬롯은 그대로
+        assert c.outfit.items["bottom"] == "b_jeans"
+        assert c.outfit.items["shoes"] == "s_sneak"
+        assert c.outfit.items["top"] == c.item_id
+    assert res.reasons == []
+
+
+def test_swap_uses_weather_cold_prefers_warm_outer():
+    res = swap(WARDROBE, Weather(temp_c=-5), "casual", OUTFIT, "outerwear")
+    assert res.candidates[0].item_id in {"o_coat", "o_pad"}
+
+
+def test_swap_rain_ranks_sandals_last():
+    res = swap(
+        WARDROBE,
+        Weather(temp_c=20, precip_type="rain"),
+        "feminine",
+        ["t_blouse", "b_slacks", "s_sneak"],
+        "shoes",
+    )
+    assert [c.item_id for c in res.candidates] == ["s_sandal"]
+    assert res.candidates[0].outfit.weather_score < 1
+
+
+def test_swap_no_candidates_reason():
+    res = swap(WARDROBE, MILD, "casual", ["d_mini", "g_tote"], "bag")
+    assert res.candidates == []
+    assert "no_candidates" in res.reasons
+
+
+def test_swap_empty_slot_in_wardrobe():
+    wardrobe = [i for i in WARDROBE if i.category != "outerwear"]
+    res = swap(wardrobe, MILD, "casual", OUTFIT, "outerwear")
+    assert res.candidates == []
+    assert "no_candidates" in res.reasons
+
+
+def test_swap_unknown_slot():
+    res = swap(WARDROBE, MILD, "casual", OUTFIT, "socks")
+    assert res.candidates == [] and "unknown_slot" in res.reasons
+
+
+def test_swap_slot_not_in_outfit():
+    res = swap(WARDROBE, MILD, "casual", OUTFIT, "dress")
+    assert res.candidates == [] and "slot_not_in_outfit" in res.reasons
+
+
+def test_swap_unknown_outfit_item():
+    res = swap(WARDROBE, MILD, "casual", ["t_tee", "ghost"], "bottom")
+    assert "unknown_outfit_item" in res.reasons
+    assert res.candidates  # 남은 옷으로 계속 계산
+
+
+def test_swap_missing_weather():
+    res = swap(WARDROBE, Weather(), "casual", OUTFIT, "top")
+    assert "weather_unavailable" in res.reasons
+    assert res.target_warmth is None
+    assert res.candidates
+
+
+def test_swap_score_matches_recommend():
+    rec = recommend(WARDROBE, MILD, "casual").outfits[0]
+    ids = list(rec.items.values())
+    slot = "top" if "top" in rec.items else "dress"
+    res = swap(WARDROBE, MILD, "casual", ids, slot)
+    # 같은 점수 함수: 1위 추천 코디보다 높은 대체는 없다(같은 핵심 조합 안에서)
+    assert all(c.outfit.score <= rec.score + 1e-9 for c in res.candidates)
