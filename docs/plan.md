@@ -57,7 +57,7 @@
 | 항목 | 결정 | 근거 |
 | --- | --- | --- |
 | 추구미 | 5개: `feminine`, `street`, `minimal`, `vintage_layered`, `casual`. Y2K는 street로 교체(백엔드에 11/23 전달 완료), casual은 테마 없는 기본템. 일반 스타일 + 마이크로 트렌드 2계층 구조 | `261109-1840-01-base-styles.md`, 10/12 회의 안건 1 |
-| 추구미 점수 의미 | 옷 한 벌은 `prompts.item`, 보정 없음, 합 1. 코디 점수 = 옷 점수의 합 | `261110-0117-01-item-prompts.md` |
+| 추구미 점수 의미 | 옷 한 벌은 `prompts.item`, 보정 없음, 합 1. 코디 점수 = 옷 점수의 **평균**(추구미 점수가 있는 옷만). 합이면 아이템 수가 많은 코디가 유리해진다 | `261110-0117-01-item-prompts.md`, `261123-1652-01-recommend-scoring-v0.md` |
 | 옷 종류 쏠림 | 청바지→캐주얼, 후드→스트리트는 MVP에서 유지 | 위 Report |
 | 카테고리 판정 | YOLO 부위 + FashionCLIP 상위 3개 후보, 사용자가 등록 확인 단계에서 확정 | `261108-0315-01-category-poc.md` |
 | 카테고리 형식 | **대분류 `category`와 소분류 `subcategory` 필드 두 개로 분리**. 대분류 6종(백엔드 제안): `outerwear`, `top`, `bottom`, `shoes`, `bag`, `accessory`. 점 표기(`top.knit`)는 폐기 | 10/12 회의 안건 7 |

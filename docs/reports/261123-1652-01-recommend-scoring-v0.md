@@ -8,7 +8,7 @@
 
 ## 요약
 
-`recommend/scoring.py`에 `recommend(wardrobe, weather, aesthetic_key, n=3)`를 만들었다. 날씨로 목표 따뜻함을 정하고, 추구미 점수와 날씨 점수를 섞어 코디 후보를 매긴 뒤, 핵심 옷이 겹치지 않게 3종을 고른다. 카테고리(`configs/categories.yaml`, 안 A 초안)와 따뜻함·임계값·가중치(`configs/recommend.yaml`)는 모두 설정 파일에 있다. **규칙 숫자는 모두 근거 없는 초안**이라 사람 확인 전에는 merge하지 않는다.
+`recommend/scoring.py`에 `recommend(wardrobe, weather, aesthetic_key, n=3)`를 만들었다. 날씨로 목표 따뜻함을 정하고, 추구미 점수와 날씨 점수를 섞어 코디 후보를 매긴 뒤, 핵심 옷이 겹치지 않게 3종을 고른다. 카테고리(`configs/categories.yaml`, 안 A 초안)와 따뜻함·임계값·가중치(`configs/recommend.yaml`)는 모두 설정 파일에 있다. **규칙 숫자는 초안 v0**이다. 근거 자료가 없어 그대로 merge하고, T17 추천 시나리오 테스트에서 조정한다(2026-11-23 사용자 확인).
 
 ## 변경 내역
 
@@ -63,7 +63,8 @@
 
 ## 후속 작업
 
-- 사람 확인: `recommend.yaml` 숫자, 추구미 점수 평균/합 (`docs/todo/recommend-v0.md` 열린 질문)
+- T17: `recommend.yaml` 규칙 숫자(초안 v0)를 시나리오 테스트로 조정
+- 추구미 점수 평균은 사용자 확인으로 확정, `plan.md` §4를 "평균"으로 수정(2026-11-23)
 - T15: dataclass ↔ pydantic 변환, 백엔드 강수 형태 값 매핑, 사유 코드 ↔ API 코드 매핑, 응답 시간 측정
 - T16: 슬롯 교체는 같은 `_target_warmth`·점수 함수를 재사용
 - 옷장이 수백 벌이면 슬롯별 상위 k개로 후보를 자른다(코드에 `ponytail:` 주석)
