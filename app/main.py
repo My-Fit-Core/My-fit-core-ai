@@ -6,6 +6,15 @@
 
 from fastapi import FastAPI
 
+# ML 패키지(cv2, torch 등)가 없는 환경(기본 requirements.txt)에서도 서버가 뜨도록 lazy import
+try:
+    from app.pipeline import detection
+    from app.pipeline import tagging as _tagging
+
+    _ML_AVAILABLE = True
+except ImportError:
+    _ML_AVAILABLE = False
+
 from app.schemas import (
     API_VERSION,
     AnalyzeRequest,
@@ -19,9 +28,27 @@ MODEL_VERSION = "mock-0"
 app = FastAPI(title="MyFit AI Server", version=API_VERSION)
 
 
+def _model_status(loader) -> str:
+    """functools.cache 로드 여부. 모델을 강제로 로드하지 않는다."""
+    return "loaded" if loader.cache_info().currsize > 0 else "not_loaded"
+
+
 @app.get("/health")
 def health() -> dict:
-    return {"status": "ok", "api_version": API_VERSION, "model_version": MODEL_VERSION}
+    models = (
+        {
+            "detector": _model_status(detection.load_detector),
+            "tagger": _model_status(_tagging.load_tagger),
+        }
+        if _ML_AVAILABLE
+        else {"detector": "unavailable", "tagger": "unavailable"}
+    )
+    return {
+        "status": "ok",
+        "api_version": API_VERSION,
+        "model_version": MODEL_VERSION,
+        "models": models,
+    }
 
 
 @app.post(f"/{API_VERSION}/analyze", response_model=AnalyzeResult)
