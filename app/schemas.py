@@ -59,3 +59,50 @@ class AnalyzeResult(BaseModel):
     model_version: str
     items: list[DetectedItem] = []
     errors: list[ErrorDetail] = []
+
+
+# ── 추천 ────────────────────────────────────────────────────────────────────
+
+
+class WeatherInput(BaseModel):
+    temperature: float | None = Field(default=None, description="기온 (°C)")
+    precipitation_type: str | None = Field(default=None, description="none / rain / snow")
+    humidity: float | None = Field(default=None, ge=0, le=100)
+    wind_speed: float | None = Field(default=None, ge=0, description="m/s")
+    precipitation_prob: float | None = Field(default=None, ge=0, le=100)
+
+
+class WardrobeItemInput(BaseModel):
+    item_id: str
+    category: str = Field(description="top / bottom / dress / outerwear / shoes / bag")
+    aesthetic_scores: dict[str, float] = {}
+    embedding: list[float] | None = None
+
+
+class RecommendRequest(BaseModel):
+    weather: WeatherInput
+    aesthetics: list[str] = Field(default=[], description="메인 추구미 먼저, 보조 추구미 이후")
+    schedule: str | None = None
+    wardrobe: list[WardrobeItemInput]
+
+
+class OutfitSetOutput(BaseModel):
+    item_ids: list[str]
+    score: float
+
+
+class RecommendResult(BaseModel):
+    sets: list[OutfitSetOutput]
+
+
+class SwapRequest(BaseModel):
+    weather: WeatherInput
+    aesthetics: list[str] = []
+    schedule: str | None = None
+    wardrobe: list[WardrobeItemInput]
+    outfit_item_ids: list[str] = Field(description="현재 코디 아이템 ID 목록")
+    slot: str = Field(description="교체할 슬롯의 대분류 category")
+
+
+class SwapResult(BaseModel):
+    candidates: list[str] = Field(description="교체 후보 item_id 목록 (점수 높은 순)")

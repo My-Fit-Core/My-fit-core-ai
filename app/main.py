@@ -4,7 +4,7 @@
 실제 파이프라인은 app/pipeline/ 에 구현 후 연결한다.
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 
 # ML 패키지(cv2, torch 등)가 없는 환경(기본 requirements.txt)에서도 서버가 뜨도록 lazy import
 try:
@@ -21,6 +21,17 @@ from app.schemas import (
     AnalyzeResult,
     ColorInfo,
     DetectedItem,
+    OutfitSetOutput,
+    RecommendRequest,
+    RecommendResult,
+    SwapRequest,
+    SwapResult,
+)
+from recommend.engine import (
+    WardrobeItem,
+    build_outfit_sets,
+    check_minimum_condition,
+    swap_slot,
 )
 
 MODEL_VERSION = "mock-0"
@@ -75,3 +86,41 @@ def analyze(req: AnalyzeRequest) -> AnalyzeResult:
             )
         ],
     )
+
+
+def _to_engine_items(wardrobe: list) -> list[WardrobeItem]:
+    return [
+        WardrobeItem(
+            item_id=w.item_id,
+            category=w.category,
+            aesthetic_scores=w.aesthetic_scores,
+            embedding=w.embedding,
+        )
+        for w in wardrobe
+    ]
+
+
+@app.post(f"/{API_VERSION}/recommend", response_model=RecommendResult)
+def recommend(req: RecommendRequest) -> RecommendResult:
+    items = _to_engine_items(req.wardrobe)
+    if not check_minimum_condition(items):
+        raise HTTPException(
+            status_code=422,
+            detail="옷장에 추천 가능한 조합이 없습니다. 상의+하의 또는 원피스를 등록해 주세요.",
+        )
+    sets = build_outfit_sets(items, temperature=req.weather.temperature)
+    return RecommendResult(
+        sets=[OutfitSetOutput(item_ids=s.item_ids, score=s.score) for s in sets]
+    )
+
+
+@app.post(f"/{API_VERSION}/recommend/swap", response_model=SwapResult)
+def recommend_swap(req: SwapRequest) -> SwapResult:
+    items = _to_engine_items(req.wardrobe)
+    candidates = swap_slot(req.outfit_item_ids, req.slot, items)
+    if not candidates:
+        raise HTTPException(
+            status_code=422,
+            detail=f"교체 가능한 '{req.slot}' 아이템이 옷장에 없습니다.",
+        )
+    return SwapResult(candidates=candidates)
