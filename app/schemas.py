@@ -4,11 +4,30 @@
 현재 v0: 백엔드와 미합의 초안.
 """
 
+from enum import Enum
 from typing import Literal
 
 from pydantic import BaseModel, Field
 
 API_VERSION = "v0"
+
+
+class ErrorCode(str, Enum):
+    # 재시도하면 될 수 있음
+    WORKER_TIMEOUT = "WORKER_TIMEOUT"
+    MODEL_UNAVAILABLE = "MODEL_UNAVAILABLE"
+    STORAGE_UNAVAILABLE = "STORAGE_UNAVAILABLE"
+    INTERNAL_ERROR = "INTERNAL_ERROR"
+    CALLBACK_TIMEOUT = "CALLBACK_TIMEOUT"
+    # 재시도해도 같은 결과 (이미지 규격 위반 포함)
+    NO_GARMENT_DETECTED = "NO_GARMENT_DETECTED"
+    ANALYSIS_FAILED = "ANALYSIS_FAILED"
+
+
+class ErrorDetail(BaseModel):
+    code: ErrorCode
+    message: str
+    client_item_key: str | None = None
 
 
 class AnalyzeRequest(BaseModel):
@@ -39,4 +58,4 @@ class AnalyzeResult(BaseModel):
     status: Literal["pending", "running", "done", "failed"]
     model_version: str
     items: list[DetectedItem] = []
-    error: str | None = None
+    errors: list[ErrorDetail] = []
