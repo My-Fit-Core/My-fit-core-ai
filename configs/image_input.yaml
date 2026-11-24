@@ -1,0 +1,4 @@
+# 입력 이미지 규격 (02-specs.md §3). 근거: 10/12 회의 안건 9.
+# allowed_formats는 Pillow 형식 이름(JPEG, PNG, WEBP ...)으로 적는다.
+allowed_formats: [JPEG, PNG, WEBP]
+max_mb: 20

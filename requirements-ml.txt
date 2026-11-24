@@ -1,11 +1,12 @@
 # Install in a GPU environment. Pin versions after the PoC.
+# opencv-python-headless를 ultralytics보다 먼저 설치해 headless가 우선 적용되게 한다.
+# ultralytics가 opencv-python을 함께 설치하면: pip uninstall -y opencv-python
 -r requirements.txt
 torch
 torchvision
 transformers
 open_clip_torch
+opencv-python-headless
 ultralytics
-pillow
 numpy
 scikit-learn
-opencv-python-headless

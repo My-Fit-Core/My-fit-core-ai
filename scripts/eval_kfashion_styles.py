@@ -140,7 +140,8 @@ def load_records(labels_zip, images_zip):
     return records
 
 
-def predict(records, images_zip, config, batch_size):
+def predict(records, images_zip, config, batch_size, softmax=True):
+    """항목별 프롬프트 평균 logit을 softmax한 점수. softmax=False면 logit 그대로 돌려준다."""
     import torch
     from PIL import Image, ImageOps
     from transformers import CLIPModel, CLIPProcessor
@@ -187,7 +188,7 @@ def predict(records, images_zip, config, batch_size):
             per_style = torch.stack(
                 [logits[:, ids].mean(dim=1) for ids in prompt_ids], dim=1
             )
-            rows += per_style.softmax(dim=1).cpu().tolist()
+            rows += (per_style.softmax(dim=1) if softmax else per_style).cpu().tolist()
             print(f"{start + len(batch)}/{len(records)}")
     return rows
 

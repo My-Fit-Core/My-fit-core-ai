@@ -1,0 +1,45 @@
+# 추천 규칙 v0 (recommend/scoring.py). [초안] 아래 숫자는 모두 근거 없는 초안이며 사람 확인이 필요하다.
+# 카테고리·소분류 이름은 configs/categories.yaml과 같아야 한다(tests/test_recommend.py가 확인).
+
+# 코디의 뼈대: 둘 중 하나를 채워야 코디가 된다 (상의+하의 또는 원피스)
+bases:
+  - [top, bottom]
+  - [dress]
+# 아우터 슬롯. 추우면 반드시 넣고, 아니면 넣을지 점수로 정한다
+outer_slot: outerwear
+outer_required_below_c: 12
+# 있으면 붙이는 슬롯 (슬롯마다 추구미 점수가 가장 높은 1개)
+optional_slots: [shoes, bag, accessory]
+
+# 소분류별 따뜻함 0(가장 시원)~3(가장 따뜻). 코디 따뜻함 = 뼈대 + 아우터의 합
+warmth:
+  top: {sleeveless: 0, tshirt: 1, blouse: 1, shirt: 1, sweatshirt: 2, hoodie: 2, knit: 2}
+  bottom: {shorts: 0, mini_skirt: 0, long_skirt: 1, slacks: 1, jeans: 1}
+  dress: {mini_dress: 1, long_dress: 2}
+  outerwear: {cardigan: 1, blazer: 1, jacket: 2, coat: 3, padding: 3}
+
+# 실효 기온(체감온도, 없으면 기온 - 바람 보정)이 min_c 이상인 첫 구간의 목표 따뜻함 [최소, 최대]
+temp_bands:
+  - {min_c: 28, warmth: [0, 1]}
+  - {min_c: 23, warmth: [1, 2]}
+  - {min_c: 17, warmth: [2, 3]}
+  - {min_c: 12, warmth: [3, 4]}
+  - {min_c: 5, warmth: [4, 5]}
+  - {min_c: -100, warmth: [5, 6]}
+# 목표 범위에서 이만큼 벗어나면 날씨 점수 0
+warmth_tolerance: 3
+
+# 체감온도가 없을 때만: 풍속이 threshold_ms 이상이면 기온에서 minus_c를 뺀다
+wind: {threshold_ms: 7, minus_c: 3}
+# 덥고 습하면 목표 따뜻함을 shift만큼 옮긴다
+humid_hot: {humidity_ge: 80, temp_ge: 25, shift: -1}
+# 강수 형태가 none이 아니거나 강수확률이 prob_ge 이상이면, avoid 소분류 옷마다 날씨 점수에서 penalty를 뺀다
+rain:
+  prob_ge: 60
+  avoid: [sandals, flats, heels, long_skirt]
+  penalty: 0.3
+
+# 최종 점수 = aesthetic × 추구미 점수 + weather × 날씨 점수
+weights: {aesthetic: 0.5, weather: 0.5}
+# 세트끼리 겹쳐도 되는 핵심 옷(뼈대·아우터) 수. 3종을 못 채우면 1씩 완화한다
+diversity: {max_shared_core_items: 0}

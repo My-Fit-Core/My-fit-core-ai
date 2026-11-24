@@ -17,9 +17,13 @@ myfit-ai/
 │   ├── main.py               # 엔드포인트 정의
 │   ├── schemas.py            # 백엔드와의 요청/응답 계약 (변경 시 버전업)
 │   └── pipeline/             # 검출 → 분할/누끼 → 태깅 파이프라인
-├── recommend/                # 날씨 × 추구미 × TPO 코디 추천 로직 (GPU 불필요)
+├── recommend/                # 날씨 × 추구미 코디 추천 로직 (GPU 불필요, TPO는 2차)
 ├── configs/
-│   └── aesthetics.yaml       # 15대 추구미 정의, CLIP 프롬프트, 카테고리 체계
+│   ├── aesthetics.yaml       # 추구미(기본 5개) 정의, CLIP 프롬프트
+│   ├── categories.yaml       # 카테고리 대분류·소분류 (초안, T2 확정 전)
+│   ├── recommend.yaml        # 추천 규칙: 따뜻함, 기온 구간, 비·바람, 가중치 (초안)
+│   ├── image_input.yaml      # 입력 이미지 형식·용량
+│   └── kfashion_styles.yaml  # K-Fashion 스타일 23종 프롬프트(평가용)
 ├── notebooks/                # PoC·실험 (출력 지우고 커밋)
 ├── scripts/                  # 평가, 가중치 다운로드 등 일회성/유틸 스크립트
 ├── tests/
@@ -35,7 +39,7 @@ myfit-ai/
 | --- | --- | --- |
 | `app/` | HTTP 입출력, 요청 검증, 파이프라인 호출 | 모델 로직 자체, 추천 규칙 |
 | `app/pipeline/` | 이미지 → 아이템 리스트 변환 (검출·누끼·태깅·임베딩) | HTTP 코드 |
-| `recommend/` | 옷장 아이템 + 날씨 + 추구미 + TPO → 코디 후보 점수화 | 모델 추론 (임베딩·점수는 입력으로 받음) |
+| `recommend/` | 옷장 아이템 + 날씨 + 추구미 → 코디 후보 점수화 (TPO는 2차) | 모델 추론 (임베딩·점수는 입력으로 받음) |
 | `configs/` | 사람이 합의해서 바꾸는 값 (추구미, 카테고리, 임계값) | 코드 |
 | `notebooks/` | 실험, 결과 확인 | 서빙에서 import되는 코드 |
 | `scripts/` | 평가 스크립트, 가중치 다운로드 | 서빙 로직 |

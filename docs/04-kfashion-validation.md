@@ -262,7 +262,9 @@ python scripts/eval_kfashion_styles.py --prompt-set described
 
 ## 추구미 연결 (잠정)
 
-추구미 프롬프트의 스타일별 측정 결과를 근거로 잠정 연결했습니다. 설정은 `configs/aesthetics.yaml`의 `kfashion`에 있습니다. 측정은 `python scripts/eval_aesthetics_on_kfashion.py`로 재현합니다.
+> 2026-11-09 issue #44로 Y2K가 스트리트로 바뀌었습니다. 아래 표는 이전 기준(Y2K 포함)의 기록이고, `outfit_v2` 세트는 삭제되어 `--prompt-sets outfit`이 기본입니다. 기본 스타일 기준 결과는 아래 "기본 스타일 재정의" 절을 봅니다.
+
+추구미 프롬프트의 스타일별 측정 결과를 근거로 잠정 연결했습니다. 설정은 `configs/aesthetics.yaml`의 `kfashion`에 있습니다. 측정은 `python scripts/eval_aesthetics_on_kfashion.py --prompt-sets outfit`로 재현합니다(결과는 `outputs/aesthetics_on_kfashion/seed42/`).
 
 | 추구미 | 연결 스타일 (잠정) | 차이 | 근거 수준과 메모 |
 | --- | --- | --- | --- |
@@ -310,4 +312,49 @@ python scripts/eval_kfashion_styles.py --prompt-set described
 - 미니멀은 기본값처럼 쏠리므로(1,150장 중 561장에서 1위), 서비스에서는 추구미별 점수를 전체 평균 대비로 보정하는 방식을 검토합니다.
 - 다음 단계 후보
   - K-Fashion Training 라벨로 FashionCLIP 임베딩 위에 작은 분류기 학습(linear probe)
-  - Y2K 등 마이크로 트렌드는 직접 수집
+  - Y2K 등 마이크로 트렌드는 2차 로드맵(직접 수집 필요)
+
+## 보정과 반대 개념 축 (issue #42)
+
+```bash
+python scripts/eval_aesthetics_on_kfashion.py --seed 7 --prompt-sets outfit outfit_v2    # 당시 명령. outfit_v2는 issue #44에서 삭제
+```
+
+- 실루엣·색·아이템 중심으로 다시 쓴 `outfit_v2`는 나아지지 않았습니다. 미니멀 쏠림이 캐주얼 쏠림으로 옮겨 갔습니다. 기본 세트는 `outfit`을 유지합니다.
+- 점수를 전체 평균으로 나눠 다시 합 1로 만드는 보정은 쏠림을 줄이고(미니멀 1위 559 → 454장) 연결 스타일 적중률을 조금 올렸습니다.
+- 반대 개념 축 중 캐주얼↔포멀, 뮤트↔컬러풀은 문장을 바꿔도 비교적 안정적이고(상관 0.66~0.83), 은은한↔스테이트먼트는 불안정합니다(0.45~0.49).
+
+자세한 수치는 `docs/reports/261108-0230-01-aesthetic-display.md`에 있습니다.
+
+## 기본 스타일 재정의 (issue #44)
+
+2026-11-09 기획 합의로 추구미를 기본 스타일 5개(페미닌, 스트리트, 미니멀, 빈티지 레이어드, 캐주얼)로 바꿨습니다.
+
+```bash
+python scripts/eval_aesthetics_on_kfashion.py --seed 42 --output-dir outputs/base_styles/seed42
+```
+
+**우리 스트리트 ≠ K-Fashion 스트리트.** K-Fashion 스트리트(데이터의 46%)는 일상복에 가까워 캐주얼 점수가 가장 높고, 우리 스트리트(오버핏·그래픽·로고·카고·캡)는 K-Fashion 힙합·스포티와 맞습니다. 그래서 다음처럼 연결했습니다(잠정).
+
+| 기본 스타일 | 연결 스타일 (잠정) | 적중률 (시드 7 / 42, 보정 후) |
+| --- | --- | ---: |
+| 페미닌 | 로맨틱, 페미닌 | 42% / 48% |
+| 스트리트 | 힙합, 스포티 | 48% / 56% |
+| 미니멀 | 모던, 소피스트케이티드 | 66% / 60% |
+| 빈티지 레이어드 | 컨트리, 히피, 웨스턴 | 48% / 52% |
+| 캐주얼 | 스트리트, 톰보이 | 29% / 32% |
+
+- 캐주얼 스타일 사진의 약 40%(보정 후)가 미니멀로 갑니다. 무지·기본템 쪽은 미니멀과 구분이 어렵습니다.
+- 자세한 수치는 `docs/reports/261109-1840-01-base-styles.md`에 있습니다.
+
+## 옷 한 벌 단위 추구미 (issue #35)
+
+```bash
+python scripts/eval_item_aesthetics_kfashion.py --seed 42    # 23종 × 20장, YOLO 마스크로 잘라낸 옷 단위
+```
+
+- 옷 한 벌 판정은 `prompts.item`을 씁니다. 평균 적중률은 `prompts.outfit`과 비슷하고(36~39%) 미니멀 쏠림이 없습니다.
+- 옷 종류 쏠림이 강합니다(청바지 → 캐주얼 84~88%, 후드티 → 스트리트 80~90%). MVP에서는 그대로 둡니다.
+- 정답이 코디 단위 라벨이라 옷 단위 적중률은 낮게 나옵니다.
+
+자세한 수치는 `docs/reports/261110-0117-01-item-prompts.md`에 있습니다.
