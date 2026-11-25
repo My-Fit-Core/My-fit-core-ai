@@ -27,12 +27,9 @@ from app.schemas import (
     SwapRequest,
     SwapResult,
 )
-from recommend.engine import (
-    WardrobeItem,
-    build_outfit_sets,
-    check_minimum_condition,
-    swap_slot,
-)
+from recommend.scoring import Item, Weather as ScoringWeather
+from recommend.scoring import recommend as _scoring_recommend
+from recommend.scoring import swap as _scoring_swap
 
 MODEL_VERSION = "mock-0"
 
@@ -88,39 +85,45 @@ def analyze(req: AnalyzeRequest) -> AnalyzeResult:
     )
 
 
-def _to_engine_items(wardrobe: list) -> list[WardrobeItem]:
-    return [
-        WardrobeItem(
-            item_id=w.item_id,
-            category=w.category,
-            aesthetic_scores=w.aesthetic_scores,
-            embedding=w.embedding,
-        )
-        for w in wardrobe
-    ]
+def _to_scoring_items(wardrobe: list) -> list[Item]:
+    return [Item(w.item_id, w.category, w.subcategory or "", w.aesthetic_scores or None) for w in wardrobe]
+
+
+def _to_scoring_weather(w) -> ScoringWeather:
+    return ScoringWeather(
+        temp_c=w.temperature,
+        precip_type=w.precipitation_type,
+        humidity=w.humidity,
+        wind_ms=w.wind_speed,
+        precip_prob=w.precipitation_prob,
+    )
 
 
 @app.post(f"/{API_VERSION}/recommend", response_model=RecommendResult)
 def recommend(req: RecommendRequest) -> RecommendResult:
-    items = _to_engine_items(req.wardrobe)
-    if not check_minimum_condition(items):
+    items = _to_scoring_items(req.wardrobe)
+    weather = _to_scoring_weather(req.weather)
+    aesthetic_key = req.aesthetics[0] if req.aesthetics else "casual"
+    result = _scoring_recommend(items, weather, aesthetic_key)
+    if not result.outfits:
         raise HTTPException(
             status_code=422,
             detail="옷장에 추천 가능한 조합이 없습니다. 상의+하의 또는 원피스를 등록해 주세요.",
         )
-    sets = build_outfit_sets(items, temperature=req.weather.temperature)
     return RecommendResult(
-        sets=[OutfitSetOutput(item_ids=s.item_ids, score=s.score) for s in sets]
+        sets=[OutfitSetOutput(item_ids=list(o.items.values()), score=o.score) for o in result.outfits]
     )
 
 
 @app.post(f"/{API_VERSION}/recommend/swap", response_model=SwapResult)
 def recommend_swap(req: SwapRequest) -> SwapResult:
-    items = _to_engine_items(req.wardrobe)
-    candidates = swap_slot(req.outfit_item_ids, req.slot, items)
-    if not candidates:
+    items = _to_scoring_items(req.wardrobe)
+    weather = _to_scoring_weather(req.weather)
+    aesthetic_key = req.aesthetics[0] if req.aesthetics else "casual"
+    result = _scoring_swap(items, weather, aesthetic_key, req.outfit_item_ids, req.slot)
+    if not result.candidates:
         raise HTTPException(
             status_code=422,
             detail=f"교체 가능한 '{req.slot}' 아이템이 옷장에 없습니다.",
         )
-    return SwapResult(candidates=candidates)
+    return SwapResult(candidates=[c.item_id for c in result.candidates])
