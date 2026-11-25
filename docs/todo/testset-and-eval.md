@@ -46,7 +46,8 @@
 ## 진행 메모
 
 - 2026-11-25: TODO 등록 (261125 피드백 반영)
-- 2026-11-26: **K-Fashion 정답으로 옷 한 벌 단위 측정 진행 중** (브랜치 `exp/99-item-attribute-eval`, 작업 폴더 `C:/Users/gaeun/orca/mfc-wt4`). 레퍼런스·T1 사진 없이 할 수 있는 것
+- 2026-11-26: K-Fashion 정답으로 옷 한 벌 단위 측정 **완료** → `261126-0930-01-item-attribute-eval.md`. 남은 것: 오프숄더 방식 결정, T1 사진으로 재측정. (아래는 진행 메모)
+- 2026-11-26: K-Fashion 정답으로 옷 한 벌 단위 측정 진행 (브랜치 `exp/99-item-attribute-eval`, 작업 폴더 `C:/Users/gaeun/orca/mfc-wt4`). 레퍼런스·T1 사진 없이 할 수 있는 것
   - 스크립트 `scripts/eval_item_attributes_kfashion.py`: 대분류(검출기)·소분류 상위 3·숨은 속성(소매·핏·오프숄더·소재·패턴)·디테일(AUC, 기준값별)·스타일 점수(5종/7종, 옷 한 벌 AUC)
   - 한도로 멈췄을 때 이어서 할 일: ① 결과(`outputs/item_attributes/seed42/summary.json`) 확인 ② 다른 시드(다른 사진)로 한 번 더 ③ 정확도가 충분한 디테일만 `configs/attributes.yaml`의 `details.verified`에 넣기 ④ 스타일 점수 offset 다시 정하기 ⑤ Report `docs/reports/261126-*-item-attribute-eval.md` → 리뷰 → PR
 

@@ -277,6 +277,20 @@ def main():
         sum(1 for p, t in attr_pairs["off_shoulder"] if t and p) / max(1, sum(1 for _, t in attr_pairs["off_shoulder"] if t))
     )
 
+    # 오프숄더 기준값별 정밀도·재현율(상의·원피스, 넥라인 라벨이 있는 옷)
+    off_cfg = attr_cfg["off_shoulder"]
+    off_items = [m for m in matched if m["pred_category"] in off_cfg["categories"] and m["off_shoulder"] is not None]
+    if off_items:
+        probs = np.array([tagging._Scorer(emb[m["emb"]][None, :], scale).yes_prob(off_cfg["prompts"]) for m in off_items])
+        truth = np.array([m["off_shoulder"] for m in off_items])
+        table = {"auc": auc(probs[truth], probs[~truth]) if truth.any() and (~truth).any() else None}
+        for th in (0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9):
+            pred = probs >= th
+            tp = int((pred & truth).sum())
+            table[f"th{th}"] = {"precision": tp / pred.sum() if pred.sum() else None,
+                                "recall": tp / truth.sum() if truth.sum() else None}
+        rep["attributes"]["off_shoulder_thresholds"] = table
+
     # 디테일: 디테일 라벨이 있는 옷만, 디테일마다 AUC와 기준값별 정밀도·재현율
     det_cfg = attr_cfg["details"]
     det_items = [m for m in matched if m.get("details_labeled")]
