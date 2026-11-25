@@ -1,7 +1,7 @@
 """app/pipeline/tagging.py 단위 테스트.
 
 crop_item / _softmax / TagResult 는 모델 없이 실행.
-tag_item 통합 테스트는 open_clip 없으면 skip.
+tag_item 통합 테스트는 transformers·torch 없으면 skip.
 """
 
 import pytest
@@ -104,11 +104,11 @@ def test_get_device_returns_valid():
     assert device in ("cpu", "cuda", "mps")
 
 
-# ── tag_item 통합 (open_clip 필요) ───────────────────────────────
+# ── tag_item 통합 (transformers·torch 필요, 첫 실행 시 모델 다운로드) ──
 
 
 def test_tag_item_integration():
-    pytest.importorskip("open_clip", reason="open_clip 없으면 skip")
+    pytest.importorskip("transformers", reason="transformers 없으면 skip")
     pytest.importorskip("torch", reason="torch 없으면 skip")
 
     from app.pipeline.tagging import tag_item
