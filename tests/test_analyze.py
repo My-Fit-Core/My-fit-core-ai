@@ -127,9 +127,16 @@ def test_bottom_cut_at_frame_edge_dropped():
     assert [i.category for i in res.items] == ["top"]
 
 
-def test_only_cut_bottom_means_no_garment():
-    res = _run(_req(1), Fake([_det(100, "trousers", 0.8, y2=H)]))
-    assert res.errors[0].code == "NO_GARMENT_DETECTED"
+def test_single_item_touching_bottom_is_kept():
+    """바닥에 펼쳐 꽉 차게 찍은 원피스 한 벌은 끝에 닿아도 남긴다."""
+    res = _run(_req(1), Fake([_det(100, "long_sleeved_dress", 0.8, y2=H)]))
+    assert res.result_status == "succeeded" and res.items[0].category == "dress"
+
+
+def test_direct_registration_with_duplicates_uses_first():
+    fake = Fake([_det(100, "trousers", 0.9), _det(102, "skirt", 0.5)])
+    res = _run(_req(1, category="bottom"), fake)
+    assert len(res.items) == 1 and res.items[0].bbox[0] == 0.5
 
 
 def test_partial_failed_on_upload_error():
