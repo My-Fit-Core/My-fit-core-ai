@@ -17,6 +17,7 @@ from PIL import Image
 
 from app.pipeline.image_input import ImageValidationError, validate_image
 from app.schemas import (
+    MAX_ITEMS,
     AnalyzedItem,
     AnalyzeRequest,
     AnalyzeResult,
@@ -34,6 +35,7 @@ DETECTOR_CLASSES: dict[str, dict] = yaml.safe_load(
     (ROOT / "configs/categories.yaml").read_text(encoding="utf-8")
 )["detector_classes"]
 DETECTOR_VERSION = "deepfashion2-yolov8s-seg"
+TAGGER_VERSION = "fashion-clip-vitb32"  # app.pipeline.tagging.MODEL_VERSION과 같아야 한다(테스트가 확인)
 
 Fetch = Callable[[str], bytes]
 Upload = Callable[[str, bytes], None]
@@ -96,7 +98,8 @@ def find_regions(image: Image.Image, req: AnalyzeRequest, detect) -> list[Region
         mask=np.ones((image.height, image.width), dtype=bool),
         category=req.category,
     )
-    detections = detect(image, max_items=len(req.items))
+    # 직접 등록은 대분류로 고르기 전에 자르면 안 되므로 상한까지 받는다
+    detections = detect(image, max_items=MAX_ITEMS if req.category else len(req.items))
     regions = []
     for d in detections:
         cls = DETECTOR_CLASSES.get(d.df2_class, {})
@@ -142,16 +145,6 @@ def run_analysis(
     colors=None,
 ) -> AnalyzeResult:
     """분석 한 건. 예외를 밖으로 던지지 않고 항상 결과(succeeded/partial_failed/failed)를 돌려준다."""
-    if detect is None or tag is None or colors is None:
-        # ML 패키지는 실제 실행 때만 불러온다(테스트·기본 설치에서는 가짜를 넘긴다)
-        from app.pipeline.color import extract_colors
-        from app.pipeline.detection import detect as _detect
-        from app.pipeline.tagging import tag_item
-
-        detect, tag, colors = detect or _detect, tag or tag_item, colors or extract_colors
-
-    from app.pipeline.tagging import MODEL_VERSION as TAGGER_VERSION
-
     model_version = f"{TAGGER_VERSION}+{DETECTOR_VERSION}"
 
     def failed(code: ErrorCode, message: str) -> AnalyzeResult:
@@ -163,6 +156,15 @@ def run_analysis(
         )
 
     try:
+        if detect is None or tag is None or colors is None:
+            # ML 패키지는 실제 실행 때만 불러온다(테스트·기본 설치에서는 가짜를 넘긴다)
+            try:
+                from app.pipeline.color import extract_colors
+                from app.pipeline.detection import detect as _detect
+                from app.pipeline.tagging import tag_item
+            except ImportError as e:
+                raise JobError(ErrorCode.MODEL_UNAVAILABLE, f"ML 패키지 없음: {e}") from e
+            detect, tag, colors = detect or _detect, tag or tag_item, colors or extract_colors
         try:
             data = fetch(req.image_url)
         except Exception as e:  # 네트워크·스토리지 오류는 종류가 많다
@@ -187,6 +189,9 @@ def run_analysis(
             items.append(_analyze_item(image, region, target, upload, tag, colors))
         except UploadError as e:
             errors.append(_item_error(ErrorCode.STORAGE_UNAVAILABLE, f"누끼 업로드 실패: {e}", target))
+        except (ImportError, OSError, RuntimeError) as e:
+            # 모델 로드·실행 문제는 재시도하면 될 수 있다
+            errors.append(_item_error(ErrorCode.MODEL_UNAVAILABLE, f"태깅 모델 오류: {e}", target))
         except Exception as e:
             log.exception("item failed: job_id=%s key=%s", req.job_id, target.client_item_key)
             errors.append(_item_error(ErrorCode.ANALYSIS_FAILED, str(e), target))

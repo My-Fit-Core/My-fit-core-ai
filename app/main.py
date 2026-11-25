@@ -7,6 +7,7 @@
 환경변수 AI_SERVER_SECRET이 비어 있으면 확인하지 않는다(개발용).
 """
 
+import hmac
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -44,6 +45,9 @@ MODEL_VERSION = "mock-0"
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    if not os.getenv("AI_SERVER_SECRET"):
+        # 비어 있으면 누구나 image_url·callback_url을 정해 이 서버가 그 주소로 요청하게 할 수 있다(SSRF)
+        log.warning("AI_SERVER_SECRET이 비어 있어 인증 없이 열려 있다. 배포 환경에서는 반드시 설정할 것")
     # 모델은 서버 시작 때 한 번 불러온다(02-specs §8). 첫 요청이 모델 로드 시간(CPU에서 1~2분)을 기다리지 않게.
     # TestClient(app)를 with 없이 쓰면 이 단계를 건너뛴다.
     if _ML_AVAILABLE and os.getenv("PRELOAD_MODELS", "1") == "1":
@@ -63,7 +67,7 @@ DOWNLOAD_TIMEOUT_S = 15.0
 
 def require_secret(secret: str | None = Header(default=None, alias=SECRET_HEADER)) -> None:
     expected = os.getenv("AI_SERVER_SECRET", "")
-    if expected and secret != expected:
+    if expected and not hmac.compare_digest((secret or "").encode(), expected.encode()):
         raise HTTPException(status_code=401, detail="인증 실패")
 
 

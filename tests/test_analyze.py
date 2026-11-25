@@ -148,9 +148,26 @@ def test_direct_registration_without_detection_uses_full_image():
 
 
 def test_direct_registration_uses_matching_detection():
-    fake = Fake([_det(0, "trousers"), _det(100, "short_sleeved_shirt")])
-    res = _run(_req(2, category="top"), fake)
+    """업로드 대상이 1개여도, 신뢰도 1위가 다른 대분류면 그 다음 검출을 본다."""
+    fake = Fake([_det(0, "trousers", 0.95), _det(100, "short_sleeved_shirt", 0.6)])
+    res = _run(_req(1, category="top"), fake)
     assert len(res.items) == 1 and res.items[0].bbox[0] == 0.5  # 상의 검출 영역
+
+
+def test_model_error_on_item_is_retryable_code():
+    def broken_tag(*a, **k):
+        raise RuntimeError("CUDA out of memory")
+
+    fake = Fake([_det(0)])
+    res = run_analysis(_req(1), fake.fetch, fake.upload, detect=fake.detect, tag=broken_tag, colors=_colors)
+    assert res.result_status == "failed" and res.errors[0].code == "MODEL_UNAVAILABLE"
+
+
+def test_tagger_version_matches():
+    from app.pipeline.analyze import TAGGER_VERSION
+    from app.pipeline.tagging import MODEL_VERSION
+
+    assert TAGGER_VERSION == MODEL_VERSION
 
 
 def test_cutout_path_prefers_backend_path():
@@ -189,6 +206,12 @@ def test_send_result_signs_and_retries(monkeypatch):
     last = seen[-1]
     headers = {TIMESTAMP_HEADER: last.headers[TIMESTAMP_HEADER], SIGNATURE_HEADER: last.headers[SIGNATURE_HEADER]}
     assert verify(last.content, headers, "key", now=int(last.headers[TIMESTAMP_HEADER]))
+
+
+def test_send_result_invalid_url_does_not_raise(monkeypatch):
+    monkeypatch.delenv("AI_CALLBACK_HMAC_SECRET", raising=False)
+    with httpx.Client() as client:
+        assert not send_result("not a url", _result(), client, sleep=lambda s: None)
 
 
 def test_send_result_gives_up(monkeypatch):

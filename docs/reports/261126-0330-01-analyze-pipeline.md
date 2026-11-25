@@ -30,16 +30,17 @@
 | --- | --- | --- |
 | 사진 다운로드 실패 | `STORAGE_UNAVAILABLE` | 사진 전체 |
 | 사진 규격 위반(형식·용량·손상) | `ANALYSIS_FAILED` | 사진 전체 |
-| 검출기 로드·실행 오류 | `MODEL_UNAVAILABLE` | 사진 전체 |
+| ML 패키지 없음, 검출기 로드·실행 오류 | `MODEL_UNAVAILABLE` | 사진 전체 |
 | 옷 0벌 | `NO_GARMENT_DETECTED` | 사진 전체 |
 | 그 밖의 예외 | `INTERNAL_ERROR` | 사진 전체 |
 | 누끼 업로드 실패 | `STORAGE_UNAVAILABLE` | 옷 한 벌(`client_item_key`) |
-| 태깅 등 옷 한 벌 처리 오류 | `ANALYSIS_FAILED` | 옷 한 벌 |
+| 태깅 모델 로드·실행 오류 | `MODEL_UNAVAILABLE` | 옷 한 벌 |
+| 그 밖의 옷 한 벌 처리 오류 | `ANALYSIS_FAILED` | 옷 한 벌 |
 | 콜백 전달 실패 | (보낼 곳이 없어 로그만) | — |
 
 ## 결과·측정치
 
-- pytest: 분석·헬스·입력·스키마 테스트 통과, ruff 통과
+- pytest: `tests/test_analyze.py`·`test_health.py`·`test_image_input.py`·`test_schemas.py`·`test_recommend.py` 75 passed, ruff 통과. 이 테스트들은 가짜 검출기·태거를 쓰는 단위 테스트이고, **실제 모델로 파이프라인 전체를 도는 자동 테스트는 아직 없다**(아래 수동 실행만)
 - 실제 모델 실행(K-Fashion 사진 3장, CPU, 업로드는 메모리): 3장 모두 `succeeded`, 누끼 5개 업로드(2벌·2벌·1벌)
 
 | 사진 | 시간 | 결과(대분류, 소분류, 소매, 핏, 오프숄더, 소재, 1위 style_id) |
@@ -65,6 +66,7 @@
 
 - **신발·가방 누끼는 배경을 지우지 못한다.** 검출기(DeepFashion2)에 없는 종류라 사진 전체를 올린다. 누끼 모델(#41, SAM 등)을 붙일 때 바꾼다 `[결정: 사용자]`
 - 서버가 재시작되면 진행 중이던 분석은 사라진다(콜백이 안 감)
+- **`AI_SERVER_SECRET`이 비어 있으면 인증 없이 열린다.** 이때는 누구나 `image_url`·`callback_url`을 정해 이 서버가 그 주소로 요청하게 할 수 있다(SSRF). 시작할 때 경고 로그를 남기며, 배포 환경에서는 반드시 설정한다. 비어 있으면 서버가 뜨지 않게 할지는 배포(#102) 때 정한다 `[결정: 사용자]`
 - 6벌 2초 목표는 GPU에서 다시 재야 한다(지금은 CPU)
 
 ## 백엔드 확인이 필요한 것

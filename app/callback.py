@@ -56,7 +56,7 @@ def send_result(url: str, result: AnalyzeResult, client: httpx.Client, sleep=tim
             if res.is_success:
                 return True
             log.warning("callback %s: HTTP %s (시도 %d)", result.job_id, res.status_code, attempt + 1)
-        except httpx.HTTPError as e:
+        except (httpx.HTTPError, httpx.InvalidURL) as e:
             log.warning("callback %s: %s (시도 %d)", result.job_id, e, attempt + 1)
         if attempt < len(RETRY_DELAYS):
             sleep(RETRY_DELAYS[attempt])
