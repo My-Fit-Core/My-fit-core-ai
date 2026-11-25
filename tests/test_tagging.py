@@ -251,3 +251,8 @@ def test_tag_item_integration():
     assert shoe.category == "shoes"
     assert all(c["category"] == "shoes" for c in shoe.category_candidates)
     assert shoe.fit is None and shoe.off_shoulder is None
+
+
+def test_subcategory_prompts_match_categories():
+    subs = {s for v in _cfg("categories.yaml")["categories"].values() for s in v}
+    assert set(_attr_cfg()["subcategory"]["prompts"]) <= subs
