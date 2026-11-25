@@ -45,6 +45,7 @@
 
 | 상태 | 작업 | 완료 Report |
 | --- | --- | --- |
+| 완료 | 1차 멘토링 피드백 후 AI 파트 기획 정리 (#109) | `261125-2258-01-mentoring-feedback-ai-plan.md` |
 | 완료 | 입력 이미지 검증 모듈 (T7) | `261123-1535-01-input-image-validation.md` |
 | 완료 | YOLO 검출+마스크 모듈 (T8) | `261123-1544-01-yolo-detection.md` |
 | 완료 | 02-specs.md를 10/12 회의 결정에 맞게 갱신 (T24) | `261123-1624-01-specs-1012-decisions.md` |
