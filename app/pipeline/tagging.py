@@ -199,7 +199,7 @@ def _attributes(sc: _Scorer, cfg: dict, category: str, subcategory: str | None) 
         out["fit"] = sc.choose(fit["prompts"][category], fit["min_prob"])
 
     off = cfg["off_shoulder"]
-    if category in off["categories"]:
+    if off.get("enabled", True) and category in off["categories"]:
         p = sc.yes_prob(off["prompts"])
         out["off_shoulder"] = (
             True if p >= off["true_if_prob_ge"] else False if p <= off["false_if_prob_le"] else None
