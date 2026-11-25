@@ -178,7 +178,7 @@ def _category_candidates(
         for cat, subs in categories.items()
         if only is None or cat == only
         for sub in subs
-        if sub not in skip
+        if sub not in skip or all(s in skip for s in subs)  # 대분류가 통째로 빠지면 skip을 무시
     ]
     probs = _softmax(np.array([sc.logits(t[2]).mean() for t in triples]))
     top3 = np.argsort(probs)[::-1][:3]

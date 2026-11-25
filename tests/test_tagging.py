@@ -268,3 +268,6 @@ def test_ai_skip_subcategories_never_candidates(fake_texts):
     got = _category_candidates(_Scorer(img, 100.0), cats, "top", prompts, skip=["inner_tshirt"])
     assert "inner_tshirt" not in [c["subcategory"] for c in got]
     assert _category_candidates(_Scorer(img, 100.0), cats, "top", prompts)[0]["subcategory"] == "inner_tshirt"
+    # 대분류의 소분류가 모두 skip이면 후보가 비지 않게 skip을 무시한다
+    only_inner = {"top": ["inner_tshirt"]}
+    assert _category_candidates(_Scorer(img, 100.0), only_inner, "top", prompts, skip=["inner_tshirt"])
