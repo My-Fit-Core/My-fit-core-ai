@@ -104,3 +104,9 @@
 - [x] T22: 문서의 "15대 추구미"·TPO 표현을 현재 결정(5개 먼저·15종은 2차, TPO 제외)에 맞게 정리 — `03-product-plan.md`, `01-folder-architecture.md` 등 (이슈 #38) — PR #64, `261123-1643-01-docs-wording-cleanup.md`
   - 완료 기준: 노션 원본과 달라지는 부분은 Report에 보고(원본 수정은 사람이).
 - [ ] T23 (MVP 이후): linear probe로 캐주얼↔미니멀 혼동 개선(#34), 카테고리별 평균 보정, 추천에서 색 조합 활용, 등록 확인 단계 워싱 태그
+
+## H. 실험
+
+- [x] T25: 어울림 점수(compatibility) 실험 — K-Fashion 착용 사진 상의·하의 쌍, FashionCLIP 임베딩 + cosine/로지스틱 회귀, 이미지(거의 같은 사진 묶음) 단위 분할, AUC·FITB@10(random/hard=같은 스타일) (요구사항: F-302 보조, 선행: 없음) — 이슈 #91, PR #92 `[숫자]`·`[결정: 사용자]`, `261125-1041-01-outfit-compatibility.md`
+  - 완료 기준: 실험 스크립트가 끝까지 돌고 임베딩을 캐시로 재사용, train/test 누수 없음 assert, 자체 검사 테스트, Report에 수치·한계·다음 단계 제안.
+  - 하지 말 것: `recommend/`·API 연결(결과 보고 사람이 결정), K-Fashion 이미지·크롭·임베딩·모델 파일 커밋, 새 의존성, MLP·파인튜닝.
