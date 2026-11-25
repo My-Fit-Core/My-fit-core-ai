@@ -8,7 +8,8 @@ K-Fashion 착용 사진은 실제로 함께 입은 코디다. 같은 사진의 �
 - 크롭: 라벨 폴리곤 마스크 밖을 흰색으로 지운 박스 크롭(app.pipeline.tagging.crop_item, 서비스 입력과 같은 형식)
 - 분할: 쌍을 만들기 전에 이미지 단위로, 거의 같은 사진(같은 인물·촬영 추정) 묶음은 한쪽에만
 - 평가: AUC, FITB@10(정답 하의 1 + 다른 하의 9 중 1위), random / hard(같은 K-Fashion 주 스타일 안의 negative)
-- 대조 실험(--mode): graywb(조명 색감 제거), gray(흑백), color(CLIP 없이 색 히스토그램)로
+- 대조 실험(--mode): graywb·colorwb(옷 픽셀 기준 화이트밸런스 — 옷 색까지 지워짐), gray(흑백),
+  color(CLIP 없이 색 히스토그램), colorwbimg(사진 전체 기준 화이트밸런스 뒤 색 히스토그램)로
   "같은 사진" 지름길이 얼마나 되는지 본다. 분할은 raw 임베딩 기준 묶음으로 모드끼리 같다.
 - 재배포 금지: 임베딩·결과는 outputs/compatibility/에만 저장(gitignore). Report에는 집계 숫자만.
 
@@ -204,9 +205,11 @@ def embed_batch(model, processor, crops) -> np.ndarray:
 
 
 # ── 대조 실험: "같은 사진"(조명·색감) 지름길 확인 ─────────────────────────
-# raw: 원래 크롭 / graywb: 옷 픽셀 gray-world 화이트밸런스로 사진별 색감 제거
+# raw: 원래 크롭 / graywb: 옷 픽셀 기준 gray-world — 조명 색뿐 아니라 옷 자체 색까지 지워짐(너무 강한 대조)
 # gray: 흑백(색 정보 제거) / color: CLIP 없이 옷 픽셀 HSV 히스토그램만
-MODES = ("raw", "graywb", "gray", "color")
+# colorwb: 옷 픽셀 기준 gray-world 뒤 HSV 히스토그램 — 옷 자체 색까지 지워져 조명만 빼는 대조로는 너무 강함
+# colorwbimg: 사진 전체 기준 gray-world(조명 추정) 뒤 HSV 히스토그램 — 옷끼리의 색 차이는 남음
+MODES = ("raw", "graywb", "gray", "color", "colorwb", "colorwbimg")
 
 
 def gray_world(image, mask: np.ndarray):
@@ -222,7 +225,7 @@ def gray_world(image, mask: np.ndarray):
     return Image.fromarray(np.clip(arr * scale, 0, 255).astype(np.uint8))
 
 
-def color_hist(image, mask: np.ndarray, bins=(8, 4, 4)) -> np.ndarray:
+def color_hist(image, mask: np.ndarray, bins=(8, 4, 4)) -> np.ndarray:  # bins [초안]
     """마스크 안 픽셀의 HSV 3D 히스토그램(합 1 뒤 L2 정규화). 마스크가 비면 0벡터."""
     hsv = np.asarray(image.convert("HSV"))[mask.astype(bool)]
     if len(hsv) == 0:
@@ -247,15 +250,29 @@ def build_embeddings(samples, cache: Path, mode: str = "raw") -> dict:
     if not todo:
         return data
 
-    model, processor = (None, None) if mode == "color" else load_tagger()
+    color_only = mode in ("color", "colorwb", "colorwbimg")
+    model, processor = (None, None) if color_only else load_tagger()
     start = time.perf_counter()
     for n, s in enumerate(todo, 1):
         image = _load(s)
         if image is not None:
             parts = [p for p in s["parts"] if p["part"] in (TOP, BOTTOM, OUTER)]
             masks = [truth_mask(p["points"], s["size"]) for p in parts]
-            if mode == "color":
-                embs = [color_hist(image, m) for m in masks]
+            if color_only:
+                if mode == "colorwbimg":  # 사진 전체 픽셀로 조명을 한 번 추정
+                    full = np.ones(masks[0].shape, dtype=bool)
+                    balanced = gray_world(image, full)
+                embs = [
+                    color_hist(
+                        balanced
+                        if mode == "colorwbimg"
+                        else gray_world(image, m)
+                        if mode == "colorwb"
+                        else image,
+                        m,
+                    )
+                    for m in masks
+                ]
             else:
                 crops = []
                 for p, m in zip(parts, masks):
