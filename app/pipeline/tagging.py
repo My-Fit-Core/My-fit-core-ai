@@ -1,11 +1,15 @@
-"""FashionCLIP zero-shot 태깅: 추구미·카테고리 후보·패턴·임베딩 (F-203, T11).
+"""FashionCLIP zero-shot 태깅 v1 (F-203, issue #117).
 
-입력은 crop_item()으로 준비한 흰색 배경 박스 크롭 이미지.
-카테고리 소분류 목록은 configs/categories.yaml (T2 확정 전 초안).
-패턴 값 목록은 안건 7 AI 제안 초안 (T3에서 백엔드 ERD enum과 맞출 것).
+옷 한 벌(흰 배경 박스 크롭)에서 다음을 낸다. 학습 없이 문장 비교로만 판정한다.
+- 소분류 후보 상위 3 (configs/categories.yaml)
+- 스타일 점수: 스타일마다 따로 0~1, 합 1 아님 (configs/styles.yaml)
+- 패턴, 숨은 속성 fit·off_shoulder·sleeve·material·details (configs/attributes.yaml의 tagging)
+- 임베딩 (512차원, L2 정규화)
+판정이 불확실한 속성은 None(모름)으로 둔다. 기준값은 초안이다.
 """
 
 import functools
+import math
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -15,32 +19,20 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
 
-# ponytail: FashionCLIP(ViT-B/32). 모델 확정 후 configs/로 옮긴다
 # 이 저장소는 transformers 형식이다(open_clip hf-hub 설정 파일 없음, #87). 실험 스크립트와 같은 로더를 쓴다
 MODEL_NAME = "patrickjohncyh/fashion-clip"
 MODEL_VERSION = "fashion-clip-vitb32"
 
-# 패턴 값 목록 초안 (안건 7). T3에서 백엔드 ERD enum과 맞춘다
-_PATTERN_PROMPTS: dict[str, str] = {
-    "solid": "a solid colored clothing item with no pattern",
-    "stripe": "a striped clothing item",
-    "check": "a checkered or plaid clothing item",
-    "dot": "a polka dot patterned clothing item",
-    "floral": "a floral patterned clothing item",
-    "animal": "an animal print clothing item like leopard or zebra",
-    "graphic": "a clothing item with a graphic print, logo, or lettering",
-    "other": "a clothing item with an unusual or unidentifiable pattern",
-}
+
+def _read(name: str) -> dict:
+    with open(ROOT / "configs" / name, encoding="utf-8") as f:
+        return yaml.safe_load(f)
 
 
 @functools.cache
-def _load_configs() -> tuple[list, dict]:
-    """(aesthetics list, categories dict) — 파일 변경 시 프로세스 재시작."""
-    with open(ROOT / "configs" / "aesthetics.yaml", encoding="utf-8") as f:
-        aesthetics = yaml.safe_load(f)["aesthetics"]
-    with open(ROOT / "configs" / "categories.yaml", encoding="utf-8") as f:
-        categories = yaml.safe_load(f)["categories"]
-    return aesthetics, categories
+def _load_configs() -> tuple[dict, dict, dict]:
+    """(styles.yaml, categories, attributes.yaml의 tagging) — 파일 변경 시 프로세스 재시작."""
+    return _read("styles.yaml"), _read("categories.yaml")["categories"], _read("attributes.yaml")["tagging"]
 
 
 @functools.cache
@@ -110,65 +102,151 @@ def crop_item(
     return Image.fromarray(arr).crop((x1, y1, x2, y2))
 
 
+@functools.cache
+def _text_feats(texts: tuple[str, ...]) -> np.ndarray:
+    """문장 임베딩은 옷마다 같으므로 한 번만 계산한다."""
+    model, processor = load_tagger()
+    return _encode_texts(model, processor, list(texts))
+
+
+def _sigmoid(x: float) -> float:
+    return 1 / (1 + math.exp(-x))
+
+
 @dataclass
 class TagResult:
-    aesthetic_scores: dict[str, float]  # 합 1, 보정 없음 (plan §4)
-    category_candidates: list[dict]     # [{category, subcategory, score}, ...] 상위 3
-    pattern: str                         # 패턴 라벨 (안건 7 초안)
-    embedding: list[float]               # FashionCLIP 이미지 임베딩
+    category: str
+    subcategory: str | None
+    category_candidates: list[dict]  # [{category, subcategory, score}, ...] 상위 3
+    style_scores: list[dict]  # [{style_id, score}], 스타일마다 0~1, 합 1 아님
+    pattern: str | None
+    fit: str | None
+    off_shoulder: bool | None
+    sleeve: str | None
+    material: str | None
+    details: list[str]
+    embedding: list[float]  # FashionCLIP 이미지 임베딩
     model_version: str = field(default=MODEL_VERSION)
+
+
+class _Scorer:
+    """이미지 하나에 대한 문장별 logit(= logit_scale × 코사인 유사도)."""
+
+    def __init__(self, img_feat: np.ndarray, scale: float):
+        self.img = img_feat
+        self.scale = scale
+
+    def logits(self, texts: list[str]) -> np.ndarray:
+        return self.scale * (self.img @ _text_feats(tuple(texts)).T).reshape(-1)
+
+    def choose(self, prompts: dict[str, str], min_prob: float) -> str | None:
+        """후보 중 1위. 1위 확률이 min_prob보다 낮으면 None."""
+        probs = _softmax(self.logits(list(prompts.values())))
+        i = int(np.argmax(probs))
+        return list(prompts)[i] if probs[i] >= min_prob else None
+
+    def yes_prob(self, pair: list[str]) -> float:
+        """[예, 아니오] 문장 쌍에서 '예' 확률."""
+        return float(_softmax(self.logits(pair))[0])
+
+
+def _style_scores(sc: _Scorer, styles_cfg: dict) -> list[dict]:
+    ind = styles_cfg["independent_score"]
+    neutral = float(sc.logits(ind["neutral_prompts"]).mean())
+    return [
+        {
+            "style_id": s["style_id"],
+            "score": _sigmoid(
+                ind["temperature"] * (float(sc.logits(s["prompts"]).mean()) - neutral)
+                + ind.get("offset", 0.0)
+            ),
+        }
+        for s in styles_cfg["styles"]
+    ]
+
+
+def _category_candidates(
+    sc: _Scorer, categories: dict, only: str | None, prompts: dict | None = None, skip=()
+) -> list[dict]:
+    """소분류 후보 상위 3. 소분류마다 판정 문장(여러 개면 평균 logit)으로 점수를 낸다.
+
+    skip에 있는 소분류(이너 등 사진으로 가를 수 없는 것)는 후보에 넣지 않는다.
+    """
+    prompts = prompts or {}
+    triples = [
+        (cat, sub, prompts.get(sub) or [f"a photo of a {sub.replace('_', ' ')}"])
+        for cat, subs in categories.items()
+        if only is None or cat == only
+        for sub in subs
+        if sub not in skip or all(s in skip for s in subs)  # 대분류가 통째로 빠지면 skip을 무시
+    ]
+    probs = _softmax(np.array([sc.logits(t[2]).mean() for t in triples]))
+    top3 = np.argsort(probs)[::-1][:3]
+    return [
+        {"category": triples[i][0], "subcategory": triples[i][1], "score": float(probs[i])}
+        for i in top3
+    ]
+
+
+def _attributes(sc: _Scorer, cfg: dict, category: str, subcategory: str | None) -> dict:
+    out: dict = {"fit": None, "off_shoulder": None, "sleeve": None, "details": []}
+
+    out["pattern"] = sc.choose(cfg["pattern"]["prompts"], cfg["pattern"]["min_prob"])
+    out["material"] = sc.choose(cfg["material"]["prompts"], cfg["material"]["min_prob"])
+
+    fit = cfg["fit"]
+    if category in fit["categories"]:
+        out["fit"] = sc.choose(fit["prompts"][category], fit["min_prob"])
+
+    off = cfg["off_shoulder"]
+    if category in off["categories"]:
+        p = sc.yes_prob(off["prompts"])
+        out["off_shoulder"] = (
+            True if p >= off["true_if_prob_ge"] else False if p <= off["false_if_prob_le"] else None
+        )
+
+    sleeve = cfg["sleeve"]
+    if category in sleeve["categories"] and subcategory not in sleeve["skip_subcategories"]:
+        out["sleeve"] = sc.choose(sleeve["prompts"], sleeve["min_prob"])
+
+    det = cfg["details"]
+    out["details"] = [
+        d for d in det["verified"] if sc.yes_prob(det["prompts"][d]) >= det["true_if_prob_ge"]
+    ]
+    return out
 
 
 def tag_item(
     image: Image.Image,
     bbox: tuple[float, float, float, float],
     mask: np.ndarray,
+    category: str | None = None,
 ) -> TagResult:
-    """검출된 옷 한 벌을 태깅한다. bbox는 픽셀 xyxy."""
-    crop = crop_item(image, bbox, mask)
+    """옷 한 벌을 태깅한다. bbox는 픽셀 xyxy.
+
+    category가 주어지면(사용자가 직접 고른 대분류) 그 대분류 안에서만 소분류를 고른다.
+    """
+    styles_cfg, categories, attr_cfg = _load_configs()
+    if category is not None and category not in categories:
+        raise ValueError(f"알 수 없는 대분류: {category}")
     model, processor = load_tagger()
-    aesthetics, categories = _load_configs()
-    # CLIP 학습 온도. 코사인 유사도에 곱해야 softmax가 의미 있게 갈린다(실험 스크립트와 같은 방식)
     scale = float(model.logit_scale.detach().exp())
+    img_feat = _encode_image(model, processor, crop_item(image, bbox, mask))  # (1, D)
+    sc = _Scorer(img_feat, scale)
 
-    img_feat = _encode_image(model, processor, crop)  # (1, D)
-
-    # ── 추구미 점수 ──────────────────────────────────────────────
-    # 각 추구미의 item 프롬프트 N개 유사도 평균 × scale → softmax (보정 없음, plan §4)
-    aes_keys = [a["key"] for a in aesthetics]
-    aes_means = []
-    for aes in aesthetics:
-        txt_feats = _encode_texts(model, processor, aes["prompts"]["item"])
-        sim = scale * float((img_feat @ txt_feats.T).mean())
-        aes_means.append(sim)
-    aes_probs = _softmax(np.array(aes_means))
-    aesthetic_scores = dict(zip(aes_keys, aes_probs.tolist()))
-
-    # ── 카테고리 후보 (상위 3) ───────────────────────────────────
-    # configs/categories.yaml 초안 (T2 확정 전). 소분류별 단순 프롬프트
-    triples: list[tuple[str, str, str]] = []
-    for cat, subs in categories.items():
-        for sub in subs:
-            triples.append((cat, sub, f"a photo of a {sub.replace('_', ' ')}"))
-    cat_feats = _encode_texts(model, processor, [t[2] for t in triples])
-    cat_probs = _softmax(scale * (img_feat @ cat_feats.T).squeeze())
-    top3 = np.argsort(cat_probs)[::-1][:3]
-    category_candidates = [
-        {"category": triples[i][0], "subcategory": triples[i][1], "score": float(cat_probs[i])}
-        for i in top3
-    ]
-
-    # ── 패턴 ────────────────────────────────────────────────────
-    pat_labels = list(_PATTERN_PROMPTS.keys())
-    pat_feats = _encode_texts(model, processor, list(_PATTERN_PROMPTS.values()))
-    pattern = pat_labels[int(np.argmax((img_feat @ pat_feats.T).squeeze()))]
-
-    # ── 임베딩 ──────────────────────────────────────────────────
-    embedding = img_feat.squeeze().tolist()
+    sub_cfg = attr_cfg.get("subcategory", {})
+    candidates = _category_candidates(
+        sc, categories, category, sub_cfg.get("prompts"), sub_cfg.get("ai_skip", ())
+    )
+    cat = category or candidates[0]["category"]
+    sub = candidates[0]["subcategory"]
+    attrs = _attributes(sc, attr_cfg, cat, sub)
 
     return TagResult(
-        aesthetic_scores=aesthetic_scores,
-        category_candidates=category_candidates,
-        pattern=pattern,
-        embedding=embedding,
+        category=cat,
+        subcategory=sub,
+        category_candidates=candidates,
+        style_scores=_style_scores(sc, styles_cfg),
+        embedding=img_feat.reshape(-1).tolist(),
+        **attrs,
     )

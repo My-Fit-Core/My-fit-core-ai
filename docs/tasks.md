@@ -64,7 +64,7 @@
 - [ ] T10: 색상(k-means, 마스크 픽셀)·패턴 추출 (요구사항: F-203, 선행: T8)
   - 완료 기준: `colors[{hex, ratio}]`, `pattern` 반환, 무지/무늬 샘플 테스트.
   - 진행: 색상 완료 — PR #63, `261123-1641-01-color-extraction.md`. 패턴은 방법·값 목록 `[미정]`(`docs/todo/color-pattern.md` 열린 질문).
-- [ ] T11: FashionCLIP 태깅 — `category`+`subcategory` 상위 3개 후보, `aesthetic_scores`(`prompts.item`, 보정 없음, 합 1), 임베딩 (요구사항: F-203, 선행: T8, T2)
+- [x] T11: FashionCLIP 태깅 — `category`+`subcategory` 상위 3개 후보, `aesthetic_scores`(`prompts.item`, 보정 없음, 합 1), 임베딩 (요구사항: F-203, 선행: T8, T2) — 태깅 v1 PR #118 (머지 대기: `[결정: 사용자]`·`[숫자]`), `261126-0300-01-tagging-v1.md`
   - 완료 기준: 입력은 마스크 밖을 흰색으로 지운 박스 크롭, 임베딩 차원과 `model_version` 기록, 모델은 시작 시 1회 로드.
   - 하지 말 것: item 보정값 적용, 색 기반 보정, 카테고리 목록 임의 결정.
 - [ ] T12: `/v0/analyze` 실제 파이프라인 연결과 예외 처리 — plan §7의 에러 코드 매핑, `partial_failed`, 7벌 이상 (요구사항: F-201~203, 선행: T6, T9, T10, T11)
