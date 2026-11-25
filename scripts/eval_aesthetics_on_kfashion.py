@@ -141,6 +141,10 @@ def main():
         "--data-dir", type=Path, default=ROOT / "data/kfashion/validation"
     )
     parser.add_argument("--output-dir", type=Path)
+    parser.add_argument(
+        "--config", type=Path, default=ROOT / "configs/aesthetics.yaml",
+        help="추구미 설정 파일 (7종 실험은 configs/aesthetics_7.yaml, issue #111)",
+    )
     parser.add_argument("--prompt-sets", nargs="+", default=["outfit"])
     parser.add_argument("--per-style", type=int, default=50)
     parser.add_argument("--seed", type=int, default=42)
@@ -157,7 +161,7 @@ def main():
         )["styles"]
     ]
     config = yaml.safe_load(
-        (ROOT / "configs/aesthetics.yaml").read_text(encoding="utf-8")
+        args.config.read_text(encoding="utf-8")
     )
     aesthetics, axes = config["aesthetics"], config["axes"]
     names = [a["name"] for a in aesthetics]
@@ -172,13 +176,18 @@ def main():
         for low, high in axis["prompts"]:
             groups += [{"prompts": [low]}, {"prompts": [high]}]
 
-    images_zip = find_zip(args.data_dir / "images")
+    images_zip = find_zip(args.data_dir / "images", allow_dir=True)
     kept, _ = dedupe(load_records(find_zip(args.data_dir / "labels"), images_zip))
     sampled = sample_per_style(kept, styles, args.per_style, args.seed)
     logit_rows = predict(sampled, images_zip, groups, args.batch_size, softmax=False)
 
     n = len(names)
-    report = {"seed": args.seed, "per_style": args.per_style, "aesthetics": names}
+    report = {
+        "seed": args.seed,
+        "per_style": args.per_style,
+        "config": args.config.name,
+        "aesthetics": names,
+    }
     top1_by_set = []
     for k, ps in enumerate(args.prompt_sets):
         rows = [softmax(row[k * n : (k + 1) * n]) for row in logit_rows]

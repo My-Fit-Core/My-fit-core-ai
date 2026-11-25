@@ -72,3 +72,17 @@ def test_evaluate_counts_sub_style_and_balances_per_style():
     assert result["confusion_matrix"] == [[1, 1, 0], [3, 1, 0], [0, 0, 0]]
     assert result["chance_main_only"] == pytest.approx(1 / 3)
     assert result["chance_with_sub"] == pytest.approx(7 / 6 / 3)
+
+
+def test_image_dir_reads_like_zip(tmp_path):
+    """압축을 푼 폴더도 zip처럼 읽는다(issue #111)."""
+    from scripts.eval_kfashion_styles import ImageDir, find_zip, open_images
+
+    (tmp_path / "스타일").mkdir()
+    (tmp_path / "스타일" / "123.jpg").write_bytes(b"jpg")
+    assert find_zip(tmp_path, allow_dir=True) == tmp_path
+    with open_images(tmp_path) as images:
+        assert isinstance(images, ImageDir)
+        [info] = images.infolist()
+        assert info.filename.endswith("123.jpg")
+        assert images.read(info.filename) == b"jpg"

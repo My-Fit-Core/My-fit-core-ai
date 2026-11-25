@@ -108,8 +108,41 @@ def evaluate(records, preds, styles):
     }
 
 
-def find_zip(directory):
+class ImageDir:
+    """zip 대신 압축을 푼 폴더에서 이미지를 읽는다(zipfile.ZipFile과 같은 방식으로 쓴다).
+
+    CRC는 모든 파일을 읽어야 해서 계산하지 않는다. content가 파일마다 달라 dedupe는 사실상 꺼진다.
+    """
+
+    def __init__(self, root):
+        self.root = Path(root)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def infolist(self):
+        return [
+            zipfile.ZipInfo(str(p.relative_to(self.root)))
+            for p in self.root.rglob("*.jpg")
+        ]
+
+    def read(self, member):
+        return (self.root / member).read_bytes()
+
+
+def open_images(path):
+    if Path(path).is_dir():
+        return ImageDir(path)
+    return zipfile.ZipFile(path, metadata_encoding=ZIP_NAME_ENCODING)
+
+
+def find_zip(directory, allow_dir=False):
     zips = sorted(directory.rglob("*.zip"))
+    if not zips and allow_dir:
+        return directory
     if len(zips) != 1:
         raise SystemExit(
             f"{directory}에서 zip을 1개 찾아야 하는데 {len(zips)}개입니다. docs/04-kfashion-validation.md 참고."
@@ -118,7 +151,7 @@ def find_zip(directory):
 
 
 def load_records(labels_zip, images_zip):
-    with zipfile.ZipFile(images_zip, metadata_encoding=ZIP_NAME_ENCODING) as images:
+    with open_images(images_zip) as images:
         by_id = {Path(i.filename).stem: i for i in images.infolist() if not i.is_dir()}
     records = []
     with zipfile.ZipFile(labels_zip, metadata_encoding=ZIP_NAME_ENCODING) as labels:
@@ -133,7 +166,9 @@ def load_records(labels_zip, images_zip):
                     image_id=doc["이미지 정보"]["이미지 식별자"],
                     main=style.get("스타일"),
                     sub=style.get("서브스타일"),
-                    content=(image.CRC, image.file_size),
+                    content=(image.CRC, image.file_size)
+                    if getattr(image, "CRC", None)
+                    else (image.filename, 0),
                     member=image.filename,
                 )
             )
@@ -166,7 +201,7 @@ def predict(records, images_zip, config, batch_size, softmax=True):
 
     rows = []
     with (
-        zipfile.ZipFile(images_zip, metadata_encoding=ZIP_NAME_ENCODING) as archive,
+        open_images(images_zip) as archive,
         torch.no_grad(),
     ):
         for start in range(0, len(records), batch_size):
