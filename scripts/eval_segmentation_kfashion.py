@@ -27,6 +27,7 @@ from scripts.eval_kfashion_styles import (
     dedupe,
     find_zip,
     load_records,
+    open_images,
 )
 
 # 기본은 후보 2개. s/b/l은 tiny와 IoU가 비슷하고 느려서(v2 측정) --models로만 돌린다.
@@ -187,7 +188,7 @@ def pick_samples(data_dir, n, seed, min_parts=2, per_style=None):
     per_style을 주면 n 대신 주 스타일마다 per_style장씩 고른다.
     """
     labels_zip = find_zip(data_dir / "labels")
-    images_zip = find_zip(data_dir / "images")
+    images_zip = find_zip(data_dir / "images", allow_dir=True)
     kept, _ = dedupe(load_records(labels_zip, images_zip))
     candidates = sorted((r for r in kept if r.main), key=lambda r: r.image_id)
     random.Random(seed).shuffle(candidates)
@@ -306,7 +307,7 @@ def detect(weights, images_zip, samples, device, conf):
     model = YOLO(str(weights))
     kwargs = {"conf": conf, "device": device, "retina_masks": True, "verbose": False}
     detections, seconds = [], []
-    with zipfile.ZipFile(images_zip, metadata_encoding=ZIP_NAME_ENCODING) as archive:
+    with open_images(images_zip) as archive:
         for sample in samples:
             image = load_image(archive, sample)
             if image is None:
@@ -324,6 +325,7 @@ def detect(weights, images_zip, samples, device, conf):
                         DF2_TO_PART[result.names[int(c)]]
                         for c in result.boxes.cls.tolist()
                     ],
+                    "df2_classes": [result.names[int(c)] for c in result.boxes.cls.tolist()],
                     "masks": []
                     if result.masks is None
                     else list(result.masks.data.cpu().numpy().astype(bool)),
