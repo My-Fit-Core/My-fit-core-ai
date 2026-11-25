@@ -182,7 +182,7 @@ def summarize(rows, seconds, post_seconds=()):
     }
 
 
-def pick_samples(data_dir, n, seed, min_parts=2, per_style=None):
+def pick_samples(data_dir, n, seed, min_parts=2, per_style=None, exclude_ids=(), include_ids=None):
     """옷이 min_parts벌 이상 라벨된 이미지를 n장 고른다. 내용이 같은 이미지는 평가 기준대로 처리한다.
 
     per_style을 주면 n 대신 주 스타일마다 per_style장씩 고른다.
@@ -190,7 +190,16 @@ def pick_samples(data_dir, n, seed, min_parts=2, per_style=None):
     labels_zip = find_zip(data_dir / "labels")
     images_zip = find_zip(data_dir / "images", allow_dir=True)
     kept, _ = dedupe(load_records(labels_zip, images_zip))
-    candidates = sorted((r for r in kept if r.main), key=lambda r: r.image_id)
+    candidates = sorted(
+        (
+            r
+            for r in kept
+            if r.main
+            and r.image_id not in exclude_ids
+            and (include_ids is None or r.image_id in include_ids)
+        ),
+        key=lambda r: r.image_id,
+    )
     random.Random(seed).shuffle(candidates)
 
     samples = []

@@ -76,7 +76,8 @@ def item_truth(label: dict, category: str) -> dict:
     t["fit"] = FIT[category].get(label.get("핏"))
     neck = label.get("넥라인")
     t["off_shoulder"] = None if not neck else neck in ("오프숄더", "원숄더")
-    mats = {MATERIAL.get(m) for m in as_list(label.get("소재"))} - {None}
+    # 우븐(일반 직물)·레이스·메시 등 우리 목록에 없는 소재는 "other"(평범한 원단)로 본다
+    mats = {MATERIAL.get(m, "other") for m in as_list(label.get("소재"))}
     t["material"] = sorted(mats)  # 여러 개일 수 있다. 판정이 그중 하나면 맞음
     t["material_labeled"] = bool(as_list(label.get("소재")))
     prints = as_list(label.get("프린트"))
@@ -93,7 +94,9 @@ def item_truth(label: dict, category: str) -> dict:
 
 def collect(args):
     """옷 목록과 임베딩. 캐시가 있으면 다시 쓴다."""
-    out_dir = ROOT / f"outputs/item_attributes/seed{args.seed}"
+    name = f"seed{args.seed}" + (f"_ex{args.exclude_seed}" if args.exclude_seed is not None else "")
+    name += f"_neck{args.neckline_test}" if args.neckline_test else ""
+    out_dir = ROOT / f"outputs/item_attributes/{name}"
     cache = out_dir / "cache.npz"
     meta_path = out_dir / "items_meta.json"
     if cache.exists() and meta_path.exists():
@@ -103,7 +106,21 @@ def collect(args):
 
     from app.pipeline import tagging
 
-    images, samples = pick_samples(args.data_dir, None, args.seed, min_parts=1, per_style=args.per_style)
+    exclude = set()
+    if args.exclude_seed is not None:
+        ex_meta = ROOT / f"outputs/item_attributes/seed{args.exclude_seed}/items_meta.json"
+        exclude = {m["image_id"] for m in json.loads(ex_meta.read_text(encoding="utf-8"))}
+    include, n, per_style = None, None, args.per_style
+    if args.neckline_test:
+        pos, neg = neckline_ids(args.data_dir)
+        rng = np.random.default_rng(args.seed)
+        include = set(rng.choice(sorted(pos), args.neckline_test, replace=False).tolist())
+        include |= set(rng.choice(sorted(neg), args.neckline_test, replace=False).tolist())
+        n, per_style = len(include), None
+    images, samples = pick_samples(
+        args.data_dir, n, args.seed, min_parts=1, per_style=per_style, exclude_ids=exclude,
+        include_ids=include,
+    )
     detections, _ = detect(args.detector, images, samples, "cpu", 0.25)
     model, processor = tagging.load_tagger()
     labels_by_id = load_part_labels(args.data_dir, {s["record"].image_id for s in samples})
@@ -137,6 +154,28 @@ def collect(args):
     return meta, emb, out_dir
 
 
+def neckline_ids(data_dir):
+    """상의·원피스 넥라인이 오프숄더·원숄더인 사진(pos)과, 넥라인 라벨은 있지만 아닌 사진(neg)."""
+    import zipfile
+
+    from scripts.eval_kfashion_styles import ZIP_NAME_ENCODING, find_zip
+
+    pos, neg = set(), set()
+    with zipfile.ZipFile(find_zip(data_dir / "labels"), metadata_encoding=ZIP_NAME_ENCODING) as z:
+        for info in z.infolist():
+            if not info.filename.endswith(".json"):
+                continue
+            doc = json.loads(z.read(info).decode("utf-8"))
+            lab = doc["데이터셋 정보"]["데이터셋 상세설명"]["라벨링"]
+            necks = [(lab.get(p) or [{}])[0].get("넥라인") for p in ("상의", "원피스")]
+            necks = [x for x in necks if x]
+            if not necks:
+                continue
+            iid = doc["이미지 정보"]["이미지 식별자"]
+            (pos if any(x in ("오프숄더", "원숄더") for x in necks) else neg).add(iid)
+    return pos, neg
+
+
 def load_part_labels(data_dir, ids):
     import zipfile
 
@@ -166,12 +205,22 @@ def main():
     ap.add_argument("--detector", type=Path, default=ROOT / "weights/deepfashion2_yolov8s-seg.pt")
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--per-style", type=int, default=20)
+    ap.add_argument("--exclude-seed", type=int, help="이 시드 표본의 사진을 빼고 뽑는다(확인용)")
+    ap.add_argument(
+        "--neckline-test", type=int,
+        help="오프숄더 재현율용: 상의·원피스 넥라인이 오프숄더·원숄더인 사진 N장과 아닌 사진 N장만 뽑는다",
+    )
     ap.add_argument("--style-configs", nargs="+", default=["configs/aesthetics.yaml", "configs/styles.yaml"])
     args = ap.parse_args()
 
     from app.pipeline import tagging
 
     meta, emb, out_dir = collect(args)
+    # 정답은 매번 라벨에서 다시 만든다(매핑을 고쳐도 캐시를 다시 만들 필요가 없게)
+    labels = load_part_labels(args.data_dir, {m["image_id"] for m in meta})
+    for m in meta:
+        if m["matched"]:
+            m.update(item_truth(labels.get(m["image_id"], {}).get(m["part"], {}), m["category"]))
     model, _ = tagging.load_tagger()
     scale = float(model.logit_scale.detach().exp())
     styles_cfg, categories, attr_cfg = tagging._load_configs()
@@ -222,6 +271,8 @@ def main():
     rep["attributes"] = {k: judged(v) for k, v in attr_pairs.items()}
     rep["attributes"]["sleeve_tagger_only"] = judged([(t_only, t) for _, t, t_only in attr_pairs["sleeve"]])
     rep["attributes"]["off_shoulder"]["truth_true"] = sum(1 for _, t in attr_pairs["off_shoulder"] if t)
+    pred_true = [t for p, t in attr_pairs["off_shoulder"] if p and t is not None]
+    rep["attributes"]["off_shoulder"]["precision_true"] = (sum(pred_true) / len(pred_true)) if pred_true else None
     rep["attributes"]["off_shoulder"]["recall_true"] = (
         sum(1 for p, t in attr_pairs["off_shoulder"] if t and p) / max(1, sum(1 for _, t in attr_pairs["off_shoulder"] if t))
     )
