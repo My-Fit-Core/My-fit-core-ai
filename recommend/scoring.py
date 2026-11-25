@@ -342,12 +342,15 @@ def swap(
         reasons.append("unknown_outfit_item")
 
     # 바꿀 수 있는 슬롯: 코디에 있는 슬롯과 같은 뼈대의 슬롯, 아우터, 선택 슬롯
-    present = {i.category for i in current}
+    # 이너(#115)는 대분류가 상의여도 뼈대가 아니다. 원피스 + 이너 코디를 "원피스 + 상의"로 보지 않게 뺀다
+    present = {i.category for i in current if i.subcategory not in sc.inner_subs}
     base_slots = {s for b in cfg["bases"] for s in b}
     in_base = present & base_slots
     # 지금 코디의 뼈대를 모두 담는 뼈대만 (상의+하의 코디에 원피스가 끼지 않게, #119)
     allowed = {s for b in cfg["bases"] if in_base and in_base <= set(b) for s in b}
     allowed |= present | {cfg["outer_slot"]} | set(cfg["optional_slots"])
+    if any(i.subcategory in sc.inner_subs for i in current):
+        allowed.add("top")  # 이너 교체
     if slot not in allowed:
         reasons.append("slot_not_in_outfit")
         return result
@@ -355,8 +358,12 @@ def swap(
     kept = [i for i in current if i.category != slot]
     in_outfit = {i.id for i in current}
     options = [i for i in items if i.category == slot and i.id not in in_outfit]
-    if slot == "bottom" and any(i.category == "dress" for i in kept):
+    has_dress = any(i.category == "dress" for i in kept)
+    if slot == "bottom" and has_dress:
         options = [i for i in options if i.subcategory in cfg.get("dress_layer_bottoms", [])]
+    if slot == "top" and has_dress:
+        # 원피스 코디의 상의 자리는 이너뿐이다(원피스 + 니트 같은 조합을 만들지 않는다)
+        options = [i for i in options if i.subcategory in sc.inner_subs]
     if not options:
         reasons.append("no_candidates")
         return result

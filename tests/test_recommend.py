@@ -374,10 +374,13 @@ def test_dress_with_pants_is_a_candidate():
         Item("b_jeans", "bottom", "jeans", {"feminine": 0.9}),
         Item("b_skirt", "bottom", "mini_skirt", {"feminine": 0.9}),
     )
+    # 15도: 목표 따뜻함 3~4. 롱원피스(2)만보다 롱원피스 + 청바지(3)가 날씨 점수가 높다
     rec = recommend(wardrobe, Weather(temp_c=15, precip_type="none"), "feminine", n=3)
     combos = [o.items for o in rec.outfits]
-    assert {"dress": "d", "bottom": "b_jeans"} in combos or {"dress": "d"} in combos
+    assert combos[0] == {"dress": "d", "bottom": "b_jeans"}
     assert all(not (c.get("dress") and c.get("bottom") == "b_skirt") for c in combos)
+    hot = recommend(wardrobe, Weather(temp_c=30, precip_type="none"), "feminine", n=3)
+    assert {"dress": "d"} in [o.items for o in hot.outfits]  # 원피스만도 후보
 
 
 def test_swap_outer_skips_clashing_for_off_shoulder():
@@ -389,6 +392,27 @@ def test_swap_outer_skips_clashing_for_off_shoulder():
     )
     res = swap(wardrobe, COLD, "feminine", ["t_off", "b"], "outerwear")
     assert [c.item_id for c in res.candidates] == ["o_card"]
+
+
+LAYERED = [
+    Item("d", "dress", "long_dress", {"vintage_layered": 0.9}),
+    Item("i_tee", "top", "inner_tshirt", {"vintage_layered": 0.8}),
+    Item("t_knit", "top", "knit", {"vintage_layered": 0.9}),
+    Item("b_jeans", "bottom", "jeans", {"vintage_layered": 0.7}),
+]
+
+
+def test_swap_dress_with_inner_can_add_pants():
+    """원피스 + 이너 코디도 원피스 코디라서 바지를 받쳐 입을 수 있다."""
+    res = swap(LAYERED, MILD, "vintage_layered", ["d", "i_tee"], "bottom")
+    assert [c.item_id for c in res.candidates] == ["b_jeans"]
+
+
+def test_swap_dress_top_slot_is_inner_only():
+    res = swap(LAYERED, MILD, "vintage_layered", ["d", "i_tee"], "top")
+    assert all(c.item_id != "t_knit" for c in res.candidates)
+    res = swap(LAYERED, MILD, "vintage_layered", ["d"], "top")
+    assert res.reasons == ["slot_not_in_outfit"]
 
 
 def test_swap_top_bottom_outfit_cannot_add_dress():
