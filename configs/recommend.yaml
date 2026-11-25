@@ -5,6 +5,9 @@
 bases:
   - [top, bottom]
   - [dress]
+  - [dress, bottom]  # 원피스 + 바지 레이어드(#119). 하의는 dress_layer_bottoms만
+# 원피스 밑에 받쳐 입을 수 있는 하의 소분류 (흰 원피스 + 연청바지 등, 261125 Report §9-2)
+dress_layer_bottoms: [jeans, slacks]
 # 아우터 슬롯. 추우면 반드시 넣고, 아니면 넣을지 점수로 정한다
 outer_slot: outerwear
 outer_required_below_c: 12
@@ -37,7 +40,24 @@ humid_hot: {humidity_ge: 80, temp_ge: 25, shift: -1}
 rain:
   prob_ge: 60
   avoid: [sandals, flats, heels, long_skirt]
+  # 소재(material, 분석 결과의 숨은 속성)로도 피한다 (261125 Report 9-4 비 오는 날)
+  avoid_materials: [suede, leather, linen]
   penalty: 0.3
+
+# 옷 한 벌의 따뜻함 보정 (#119). 코디 따뜻함 = 보정한 뼈대 + 아우터의 합
+# sleeve_delta: 소매가 상황마다 다른 소분류만, 긴소매면 더한다 (반팔 티 1 → 긴팔 티 2)
+# user_warmth_delta: 사용자가 등록 화면에서 고른 따뜻함(기모·안감 등 사진에 안 보이는 것)
+warmth_adjust:
+  sleeve_subcategories: [tshirt, blouse, shirt, inner_tshirt, mini_dress, long_dress]
+  sleeve_delta: {short: 0, long: 1}
+  user_warmth_delta: {thin: -1, normal: 0, warm: 1}
+
+# 오프숄더 상의·원피스 위 아우터 (261125 Report §9-3). 어깨선이 잡힌 아우터는 어깨에서 붕 떠서 어색하다.
+# 규칙에 걸린 코디는 뺀다. 걸리지 않는 조합이 하나도 없으면(추워서 아우터가 꼭 필요) 보온을 우선해 남기고
+# reasons에 off_shoulder_outer_for_warmth를 남긴다. 교체(swap) 후보도 같은 규칙.
+off_shoulder:
+  never_with: [blazer, jacket]          # 아우터 소분류: 항상 걸림
+  ok_if_outer_fit: [oversized]          # 그 밖의 아우터는 핏이 이 값일 때만 괜찮음(모르면 걸림)
 
 # 최종 점수 = aesthetic × 추구미 점수 + weather × 날씨 점수
 weights: {aesthetic: 0.5, weather: 0.5}

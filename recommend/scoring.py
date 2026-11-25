@@ -12,6 +12,9 @@ recommend reasons 값(내부 코드, API 코드와의 매핑은 T15). swap 사�
   no_outer_for_cold         추운데 아우터가 없어 아우터 없이 반환
   weather_unavailable       기온·체감온도가 모두 없어 따뜻함 규칙을 끔(비 규칙은 적용)
   skipped_unknown_subcategory  설정에 없는 카테고리·소분류 옷을 뺌
+  off_shoulder_outer_for_warmth  어울리는 조합이 없어(추워서 아우터 필수) 오프숄더 위에 어울리지 않는 아우터를 넣음
+
+옷 속성(분석 결과의 숨은 속성, 사용자가 고른 따뜻함)은 Item의 선택 필드다(#119). 없으면 쓰지 않는다.
 """
 
 import itertools
@@ -39,6 +42,11 @@ class Item:
     category: str
     subcategory: str
     aesthetic_scores: dict[str, float] | None = None
+    sleeve: str | None = None  # short / long
+    warmth: str | None = None  # 사용자 선택 thin / normal / warm
+    material: str | None = None
+    off_shoulder: bool | None = None
+    fit: str | None = None  # oversized / regular / slim
 
 
 @dataclass(frozen=True)
@@ -123,12 +131,31 @@ class _Scorer:
 
     def rain_penalty(self, i: Item) -> float:
         rain = self.cfg["rain"]
-        return rain["penalty"] if self.rainy and i.subcategory in rain["avoid"] else 0.0
+        avoid = i.subcategory in rain["avoid"] or i.material in rain.get("avoid_materials", [])
+        return rain["penalty"] if self.rainy and avoid else 0.0
+
+    def item_warmth(self, i: Item) -> float:
+        adj = self.cfg.get("warmth_adjust", {})
+        w = self.cfg["warmth"][i.category][i.subcategory]
+        if i.subcategory in adj.get("sleeve_subcategories", []):
+            w += adj["sleeve_delta"].get(i.sleeve, 0)
+        return w + adj.get("user_warmth_delta", {}).get(i.warmth, 0)
+
+    def off_shoulder_clash(self, chosen: list[Item]) -> bool:
+        """오프숄더 상의·원피스 위에 어울리지 않는 아우터가 있으면 True."""
+        rule = self.cfg.get("off_shoulder")
+        if not rule or not any(i.off_shoulder for i in chosen if i.category in ("top", "dress")):
+            return False
+        return any(
+            i.subcategory in rule["never_with"] or i.fit not in rule["ok_if_outer_fit"]
+            for i in chosen
+            if i.category == self.cfg["outer_slot"]
+        )
 
     def outfit(self, chosen: list[Item]) -> Outfit:
         cfg = self.cfg
         core = [i for i in chosen if i.category in self.core_slots]
-        total_warmth = sum(cfg["warmth"][i.category][i.subcategory] for i in core)
+        total_warmth = sum(self.item_warmth(i) for i in core)
         # 기온을 모르면 따뜻함은 중립(1.0), 비 감점은 있는 값대로 적용
         w_score = 1.0
         if self.target is not None:
@@ -216,14 +243,25 @@ def recommend(
     if inner_subs:
         base_slot["top"] = [i for i in by_slot.get("top", []) if i.subcategory not in inner_subs]
 
+    def base_options(base: list[str], slot: str) -> list[Item]:
+        # 원피스 + 하의 뼈대에서 하의는 받쳐 입을 수 있는 소분류만(#119)
+        if slot == "bottom" and "dress" in base:
+            return [i for i in base_slot.get(slot, []) if i.subcategory in cfg.get("dress_layer_bottoms", [])]
+        return base_slot.get(slot, [])
+
     # ponytail: 뼈대 × 아우터 × 이너 전수 조합. 옷장이 수백 벌이면 슬롯별 상위 k개로 자른다
-    candidates = [
-        sc.outfit([*combo, *([outer] if outer else []), *([inner] if inner else []), *extras])
+    combos = [
+        [*combo, *([outer] if outer else []), *([inner] if inner else []), *extras]
         for base in cfg["bases"]
-        for combo in itertools.product(*(base_slot.get(s, []) for s in base))
+        for combo in itertools.product(*(base_options(base, s) for s in base))
         for outer in outer_options
         for inner in inner_options
     ]
+    # 오프숄더 + 어울리지 않는 아우터는 뺀다. 그것밖에 없으면(추워서 아우터가 꼭 필요) 보온을 우선해 남긴다
+    fitting = [c for c in combos if not sc.off_shoulder_clash(c)]
+    if combos and not fitting:
+        reasons.append("off_shoulder_outer_for_warmth")
+    candidates = [sc.outfit(c) for c in (fitting or combos)]
 
     if not candidates:
         reasons.append("insufficient_base")
@@ -305,7 +343,10 @@ def swap(
 
     # 바꿀 수 있는 슬롯: 코디에 있는 슬롯과 같은 뼈대의 슬롯, 아우터, 선택 슬롯
     present = {i.category for i in current}
-    allowed = {s for b in cfg["bases"] if present & set(b) for s in b}
+    base_slots = {s for b in cfg["bases"] for s in b}
+    in_base = present & base_slots
+    # 지금 코디의 뼈대를 모두 담는 뼈대만 (상의+하의 코디에 원피스가 끼지 않게, #119)
+    allowed = {s for b in cfg["bases"] if in_base and in_base <= set(b) for s in b}
     allowed |= present | {cfg["outer_slot"]} | set(cfg["optional_slots"])
     if slot not in allowed:
         reasons.append("slot_not_in_outfit")
@@ -314,12 +355,16 @@ def swap(
     kept = [i for i in current if i.category != slot]
     in_outfit = {i.id for i in current}
     options = [i for i in items if i.category == slot and i.id not in in_outfit]
+    if slot == "bottom" and any(i.category == "dress" for i in kept):
+        options = [i for i in options if i.subcategory in cfg.get("dress_layer_bottoms", [])]
     if not options:
         reasons.append("no_candidates")
         return result
 
+    # 오프숄더와 어울리지 않는 후보는 다른 후보가 있으면 뺀다(recommend와 같은 규칙)
+    fitting = [o for o in options if not sc.off_shoulder_clash([*kept, o])]
     result.candidates = sorted(
-        (SwapCandidate(o.id, sc.outfit([*kept, o])) for o in options),
+        (SwapCandidate(o.id, sc.outfit([*kept, o])) for o in (fitting or options)),
         key=lambda c: (-c.outfit.score, c.item_id),
     )
     return result

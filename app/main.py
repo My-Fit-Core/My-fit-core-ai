@@ -144,6 +144,11 @@ def _to_scoring_items(wardrobe: list) -> list[Item]:
             w.category,
             w.subcategory or "",
             {_style_key(s.style_id): s.score for s in w.style_scores} or None,
+            sleeve=w.sleeve,
+            warmth=w.warmth,
+            material=w.material,
+            off_shoulder=w.off_shoulder,
+            fit=w.fit,
         )
         for w in wardrobe
     ]

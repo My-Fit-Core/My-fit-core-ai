@@ -1,5 +1,7 @@
 import copy
+import dataclasses
 
+import pytest
 import yaml
 
 from recommend.scoring import CONFIG, ROOT, Item, Weather, recommend, swap
@@ -291,3 +293,110 @@ def test_no_inner_for_non_layered_aesthetic():
     ]
     rec = recommend(wardrobe, Weather(temp_c=10), "casual")
     assert all("inner_top" not in o.items for o in rec.outfits)
+
+
+# ── v1 옷 속성 (#119) ────────────────────────────────────────────
+
+
+COLD = Weather(temp_c=5, precip_type="none")
+
+
+def _w(*items):
+    return list(items)
+
+
+def test_off_shoulder_avoids_blazer_when_other_choice():
+    """오프숄더 상의 + 블레이저는 다른 조합이 있으면 나오지 않는다."""
+    wardrobe = _w(
+        Item("t_off", "top", "knit", {"feminine": 0.9}, off_shoulder=True),
+        Item("t_tee", "top", "tshirt", {"feminine": 0.2}, sleeve="long"),
+        Item("b_skirt", "bottom", "long_skirt", {"feminine": 0.8}),
+        Item("o_blazer", "outerwear", "blazer", {"feminine": 0.9}),
+        Item("o_coat", "outerwear", "coat", {"feminine": 0.5}, fit="regular"),
+    )
+    rec = recommend(wardrobe, COLD, "feminine")
+    for o in rec.outfits:
+        if o.items.get("top") == "t_off":
+            pytest.fail(f"오프숄더 + 어깨선 잡힌 아우터: {o.items}")
+    assert "off_shoulder_outer_for_warmth" not in rec.reasons
+
+
+def test_off_shoulder_ok_with_oversized_outer():
+    wardrobe = _w(
+        Item("t_off", "top", "knit", {"feminine": 0.9}, off_shoulder=True),
+        Item("b_skirt", "bottom", "long_skirt", {"feminine": 0.8}),
+        Item("o_mustang", "outerwear", "coat", {"feminine": 0.7}, fit="oversized"),
+    )
+    rec = recommend(wardrobe, COLD, "feminine")
+    assert rec.outfits[0].items == {"top": "t_off", "bottom": "b_skirt", "outerwear": "o_mustang"}
+    assert "off_shoulder_outer_for_warmth" not in rec.reasons
+
+
+def test_off_shoulder_warmth_first_when_no_other_choice():
+    """오프숄더밖에 없고 추우면 어울리지 않아도 아우터를 넣고 이유를 남긴다."""
+    wardrobe = _w(
+        Item("t_off", "top", "knit", {"feminine": 0.9}, off_shoulder=True),
+        Item("b_skirt", "bottom", "long_skirt", {"feminine": 0.8}),
+        Item("o_jacket", "outerwear", "jacket", {"feminine": 0.5}),
+    )
+    rec = recommend(wardrobe, Weather(temp_c=0, precip_type="none"), "feminine")
+    assert rec.outfits[0].items["outerwear"] == "o_jacket"
+    assert "off_shoulder_outer_for_warmth" in rec.reasons
+
+
+def test_long_sleeve_and_user_warmth_raise_warmth():
+    from recommend.scoring import _Scorer
+
+    sc = _Scorer(MILD, "casual", CONFIG)
+    tee = Item("t", "top", "tshirt")
+    assert sc.item_warmth(dataclasses.replace(tee, sleeve="long")) == sc.item_warmth(tee) + 1
+    assert sc.item_warmth(dataclasses.replace(tee, warmth="warm")) == sc.item_warmth(tee) + 1
+    knit = Item("k", "top", "knit", sleeve="long")  # 니트는 소매로 바꾸지 않는다
+    assert sc.item_warmth(knit) == CONFIG["warmth"]["top"]["knit"]
+
+
+def test_rain_avoids_suede_material():
+    wardrobe = _w(
+        Item("t", "top", "tshirt", {"casual": 0.5}),
+        Item("b", "bottom", "jeans", {"casual": 0.5}),
+        Item("s_suede", "shoes", "boots", {"casual": 0.9}, material="suede"),
+        Item("s_sneak", "shoes", "sneakers", {"casual": 0.4}),
+    )
+    assert recommend(wardrobe, MILD, "casual").outfits[0].items["shoes"] == "s_suede"
+    rainy = Weather(temp_c=20, precip_type="rain")
+    assert recommend(wardrobe, rainy, "casual").outfits[0].items["shoes"] == "s_sneak"
+
+
+def test_dress_with_pants_is_a_candidate():
+    """원피스만 / 원피스 + 바지 둘 다 후보, 스커트는 원피스 밑에 받쳐 입지 않는다."""
+    wardrobe = _w(
+        Item("d", "dress", "long_dress", {"feminine": 0.9}),
+        Item("b_jeans", "bottom", "jeans", {"feminine": 0.9}),
+        Item("b_skirt", "bottom", "mini_skirt", {"feminine": 0.9}),
+    )
+    rec = recommend(wardrobe, Weather(temp_c=15, precip_type="none"), "feminine", n=3)
+    combos = [o.items for o in rec.outfits]
+    assert {"dress": "d", "bottom": "b_jeans"} in combos or {"dress": "d"} in combos
+    assert all(not (c.get("dress") and c.get("bottom") == "b_skirt") for c in combos)
+
+
+def test_swap_outer_skips_clashing_for_off_shoulder():
+    wardrobe = _w(
+        Item("t_off", "top", "knit", {"feminine": 0.9}, off_shoulder=True),
+        Item("b", "bottom", "long_skirt", {"feminine": 0.8}),
+        Item("o_blazer", "outerwear", "blazer", {"feminine": 0.9}),
+        Item("o_card", "outerwear", "cardigan", {"feminine": 0.3}, fit="oversized"),
+    )
+    res = swap(wardrobe, COLD, "feminine", ["t_off", "b"], "outerwear")
+    assert [c.item_id for c in res.candidates] == ["o_card"]
+
+
+def test_swap_top_bottom_outfit_cannot_add_dress():
+    res = swap(WARDROBE, MILD, "casual", ["t_tee", "b_jeans"], "dress")
+    assert res.reasons == ["slot_not_in_outfit"]
+
+
+def test_swap_dress_outfit_can_add_pants_only():
+    res = swap(WARDROBE, MILD, "feminine", ["d_mini"], "bottom")
+    assert {c.item_id for c in res.candidates} <= {"b_jeans", "b_slacks"}
+    assert res.candidates
