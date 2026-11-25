@@ -186,8 +186,17 @@ def test_sleeve_skipped_for_sleeveless(fake_texts):
     assert _attributes(_Scorer(img, 100.0), cfg, "top", "sleeveless")["sleeve"] is None
 
 
-def test_off_shoulder_thresholds(fake_texts):
+def test_off_shoulder_disabled_returns_none(fake_texts):
     cfg = _attr_cfg()
+    cfg["off_shoulder"] = {**cfg["off_shoulder"], "enabled": False}
+    yes, _ = cfg["off_shoulder"]["prompts"]
+    fake_texts(yes, [1, 0, 0])
+    assert _attributes(_Scorer(np.array([[1.0, 0, 0]]), 100.0), cfg, "top", "knit")["off_shoulder"] is None
+
+
+def test_off_shoulder_thresholds(fake_texts):
+    cfg = {**_attr_cfg()}
+    cfg["off_shoulder"] = {**cfg["off_shoulder"], "enabled": True}
     yes, no = cfg["off_shoulder"]["prompts"]
     fake_texts(yes, [1, 0, 0])
     fake_texts(no, [0, 1, 0])

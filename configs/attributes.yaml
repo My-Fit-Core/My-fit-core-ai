@@ -65,6 +65,9 @@ tagging:
         regular: "a regular-fit dress"
         slim: "a tight bodycon dress"
   off_shoulder:
+    # 꺼 둠(11/26): K-Fashion 측정(#123)에서 실제 비율의 오프숄더 판정 정밀도가 3~12%라, 켜면 추천 규칙(#121)이
+    # 평범한 상의 위 블레이저·재킷까지 막는다. 방식(등록 화면 체크 / T1 사진으로 재측정)을 정한 뒤 켠다 [결정: 사용자]
+    enabled: false
     categories: [top, dress]
     # 놓치는 손해(아우터와 안 어울리는 세트)가 잘못 붙이는 손해(아우터 하나 빠짐)보다 커서 true 기준을 낮게 둔다
     true_if_prob_ge: 0.6
