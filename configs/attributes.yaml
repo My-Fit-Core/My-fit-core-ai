@@ -27,3 +27,78 @@ details: [ribbon, frill, lace, studs, fringe, fur_trim]
 
 # 사용자가 등록 화면에서 고르는 따뜻함(선택). 없으면 소분류 기본값
 warmth: [thin, normal, warm]
+
+# ── 태깅 v1 판정 문장과 기준값 (issue #117) ─────────────────────────────
+# 방법: FashionCLIP zero-shot. 후보 문장끼리 softmax해서 1위 확률이 min_prob보다 낮으면 null(모름).
+# 예/아니오 속성(off_shoulder, details)은 [예, 아니오] 문장 쌍의 확률로 판정한다.
+# min_prob 등 숫자는 모두 [숫자] 초안이다. T1 Flat Lay 사진과 K-Fashion으로 정확도를 재고 정한다.
+tagging:
+  pattern:
+    min_prob: 0.0  # 기존 동작 유지(항상 1위)
+    prompts:
+      solid: "a solid colored clothing item with no pattern"
+      stripe: "a striped clothing item"
+      check: "a checkered or plaid clothing item"
+      dot: "a polka dot patterned clothing item"
+      floral: "a floral patterned clothing item"
+      animal: "an animal print clothing item like leopard or zebra"
+      graphic: "a clothing item with a graphic print, logo, or lettering"
+      other: "a clothing item with an unusual or unidentifiable pattern"
+  fit:
+    categories: [top, bottom, outerwear, dress]  # 신발·가방·액세서리는 판정하지 않는다
+    min_prob: 0.5
+    prompts:  # 대분류마다 문장을 따로 둔다(하의 핏은 다리 폭으로 본다)
+      top:
+        oversized: "an oversized loose-fitting top with dropped shoulders"
+        regular: "a regular-fit top"
+        slim: "a slim fitted top"
+      outerwear:
+        oversized: "an oversized boxy jacket or coat with dropped shoulders"
+        regular: "a regular-fit jacket or coat with structured shoulders"
+        slim: "a slim fitted jacket"
+      bottom:
+        oversized: "wide-leg loose pants or a full flared skirt"
+        regular: "straight-leg regular-fit pants"
+        slim: "skinny slim-fit pants or a tight pencil skirt"
+      dress:
+        oversized: "a loose oversized dress"
+        regular: "a regular-fit dress"
+        slim: "a tight bodycon dress"
+  off_shoulder:
+    categories: [top, dress]
+    # 놓치는 손해(아우터와 안 어울리는 세트)가 잘못 붙이는 손해(아우터 하나 빠짐)보다 커서 true 기준을 낮게 둔다
+    true_if_prob_ge: 0.6
+    false_if_prob_le: 0.3
+    prompts: ["an off-the-shoulder or one-shoulder top", "a top that covers both shoulders"]
+  sleeve:
+    categories: [top, dress, outerwear]
+    skip_subcategories: [sleeveless]  # 민소매는 소분류로 구분
+    min_prob: 0.6
+    prompts:
+      short: "a short-sleeved clothing item"
+      long: "a long-sleeved clothing item"
+  material:
+    min_prob: 0.4
+    prompts:
+      denim: "a denim clothing item"
+      knit: "a knitted clothing item"
+      cotton_jersey: "a cotton jersey clothing item"
+      leather: "a leather clothing item"
+      suede: "a suede clothing item"
+      fur: "a fur or shearling clothing item"
+      wool_tweed: "a wool or tweed clothing item"
+      linen: "a linen clothing item"
+      chiffon_satin: "a chiffon or satin clothing item"
+      nylon_padding: "a nylon padded clothing item"
+      other: "a clothing item made of an ordinary fabric"
+  details:
+    # 정확도가 확인된 디테일만 넣는다. 확인 전이라 비어 있다(결과 details는 항상 빈 목록).
+    verified: []
+    true_if_prob_ge: 0.8
+    prompts:  # [있음, 없음]
+      ribbon: ["a clothing item with a ribbon bow", "a clothing item without a ribbon"]
+      frill: ["a clothing item with frills or ruffles", "a clothing item without frills"]
+      lace: ["a clothing item with lace trim", "a clothing item without lace"]
+      studs: ["a clothing item with metal studs", "a clothing item without studs"]
+      fringe: ["a clothing item with fringe", "a clothing item without fringe"]
+      fur_trim: ["a clothing item with a fur trim", "a clothing item without fur trim"]
