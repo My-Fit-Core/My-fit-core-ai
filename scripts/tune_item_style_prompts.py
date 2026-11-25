@@ -39,6 +39,9 @@ def hit_mean(logits, styles, mapped):
     return float(np.mean([(top[np.isin(styles, m)] == k).mean() for k, m in enumerate(mapped)]))
 
 
+RESULTS: dict = {}
+
+
 def report(name, logits, styles, mapped, keys):
     top = logits.argmax(axis=1)
     per = []
@@ -47,6 +50,8 @@ def report(name, logits, styles, mapped, keys):
         per.append((keys[k], float((top[mask] == k).mean()), auc(logits[mask, k], logits[~mask, k]), int((top == k).sum())))
     print(f"[{name}] 적중률 평균 {np.mean([p[1] for p in per]):.3f}  AUC 평균 {np.mean([p[2] for p in per]):.3f}")
     print("   " + "  ".join(f"{k} {h:.2f}/{a:.3f}/{t}" for k, h, a, t in per))
+    RESULTS[name] = {"hit_mean": float(np.mean([p[1] for p in per])), "auc_mean": float(np.mean([p[2] for p in per])),
+                     "per": [{"key": k, "hit": h, "auc": a, "top1": t} for k, h, a, t in per]}
     return per
 
 
@@ -59,6 +64,7 @@ def main():
     ap.add_argument("--k", type=int, default=4)
     ap.add_argument("--rounds", type=int, default=3)
     ap.add_argument("--out", type=Path, required=True)
+    ap.add_argument("--json", type=Path, help="결과 수치를 저장할 파일")
     args = ap.parse_args()
 
     styles_cfg = yaml.safe_load(args.styles.read_text(encoding="utf-8"))
@@ -111,6 +117,8 @@ def main():
     for name, d in (("다듬기용", d_tune), ("확인용", d_check)):
         s = sig(d + offset)
         print(f"offset {offset:.2f} {name}: 1위 점수 중앙값 {np.median(s.max(axis=1)):.2f}, 전체 평균 {s.mean():.2f}, 0.5 넘는 점수 비율 {(s > 0.5).mean():.2f}")
+        RESULTS[f"offset/{name}"] = {"offset": offset, "top_median": float(np.median(s.max(axis=1))),
+                                     "mean": float(s.mean()), "share_over_0.5": float((s > 0.5).mean())}
 
     for s, idx in zip(styles_cfg["styles"], choice):
         s["prompts"] = [texts[i] for i in idx]
@@ -119,6 +127,8 @@ def main():
     with open(args.out, "w", encoding="utf-8") as f:
         f.write(head + f"# [실험] 문장·offset은 scripts/tune_item_style_prompts.py로 고름(다듬기용 {args.tune.name}, 확인용 {args.check.name})\n\n")
         yaml.safe_dump(styles_cfg, f, allow_unicode=True, sort_keys=False, width=200)
+    if args.json:
+        args.json.write_text(json.dumps(RESULTS, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"저장: {args.out}")
 
 
