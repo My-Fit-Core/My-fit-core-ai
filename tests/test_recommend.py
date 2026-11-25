@@ -257,3 +257,37 @@ def test_swap_score_matches_recommend():
     res = swap(WARDROBE, MILD, "casual", ids, slot)
     # 같은 점수 함수: 1위 추천 코디보다 높은 대체는 없다(같은 핵심 조합 안에서)
     assert all(c.outfit.score <= rec.score + 1e-9 for c in res.candidates)
+
+
+# --- 레이어드 (이너 슬롯) ---
+
+def test_vintage_layered_adds_inner_slot():
+    wardrobe = [
+        _item("t_hood", "top", "hoodie", vintage_layered=0.7),
+        _item("t_inner", "top", "inner_tshirt", vintage_layered=0.5),
+        _item("b_jeans", "bottom", "jeans"),
+    ]
+    rec = recommend(wardrobe, Weather(temp_c=10), "vintage_layered")
+    assert rec.outfits
+    assert any("inner_top" in o.items for o in rec.outfits)
+    assert all(o.items.get("inner_top") != o.items.get("top") for o in rec.outfits if "inner_top" in o.items)
+
+
+def test_no_inner_in_summer():
+    wardrobe = [
+        _item("t_hood", "top", "hoodie", vintage_layered=0.7),
+        _item("t_inner", "top", "inner_tshirt", vintage_layered=0.5),
+        _item("b_jeans", "bottom", "jeans"),
+    ]
+    rec = recommend(wardrobe, Weather(temp_c=30), "vintage_layered")
+    assert all("inner_top" not in o.items for o in rec.outfits)
+
+
+def test_no_inner_for_non_layered_aesthetic():
+    wardrobe = [
+        _item("t_hood", "top", "hoodie", casual=0.7),
+        _item("t_inner", "top", "inner_tshirt", casual=0.5),
+        _item("b_jeans", "bottom", "jeans"),
+    ]
+    rec = recommend(wardrobe, Weather(temp_c=10), "casual")
+    assert all("inner_top" not in o.items for o in rec.outfits)

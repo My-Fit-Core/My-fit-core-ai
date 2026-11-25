@@ -13,7 +13,7 @@ optional_slots: [shoes, bag, accessory]
 
 # 소분류별 따뜻함 0(가장 시원)~3(가장 따뜻). 코디 따뜻함 = 뼈대 + 아우터의 합
 warmth:
-  top: {sleeveless: 0, tshirt: 1, blouse: 1, shirt: 1, sweatshirt: 2, hoodie: 2, knit: 2}
+  top: {sleeveless: 0, tshirt: 1, blouse: 1, shirt: 1, sweatshirt: 2, hoodie: 2, knit: 2, inner_tshirt: 1, sleeveless_inner: 0}
   bottom: {shorts: 0, mini_skirt: 0, long_skirt: 1, slacks: 1, jeans: 1}
   dress: {mini_dress: 1, long_dress: 2}
   outerwear: {cardigan: 1, blazer: 1, jacket: 2, coat: 3, padding: 3}
@@ -43,3 +43,12 @@ rain:
 weights: {aesthetic: 0.5, weather: 0.5}
 # 세트끼리 겹쳐도 되는 핵심 옷(뼈대·아우터) 수. 3종을 못 채우면 1씩 완화한다
 diversity: {max_shared_core_items: 0}
+
+# 레이어드 슬롯: 조건을 모두 만족하면 inner 슬롯을 추가한다
+# inner_subcategories: 이너로 쓸 수 있는 top 소분류
+# aesthetic_keys: 이 추구미일 때만 적용
+# max_temp_c: 이 온도 초과이면 레이어드 불필요 (여름 제외)
+layered:
+  inner_subcategories: [inner_tshirt, sleeveless_inner]
+  aesthetic_keys: [vintage_layered]
+  max_temp_c: 23

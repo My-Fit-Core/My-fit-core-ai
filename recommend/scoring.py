@@ -114,6 +114,7 @@ class _Scorer:
             self.temp is not None and self.temp < cfg["outer_required_below_c"]
         )
         self.core_slots = {s for b in cfg["bases"] for s in b} | {cfg["outer_slot"]}
+        self.inner_subs = set(cfg.get("layered", {}).get("inner_subcategories", []))
 
     def aes(self, i: Item) -> float | None:
         if i.aesthetic_scores is None:
@@ -138,8 +139,11 @@ class _Scorer:
         scored = [a for a in map(self.aes, chosen) if a is not None]
         a_score = sum(scored) / len(scored) if scored else 0.0
         weights = cfg["weights"]
+        def _slot(i: Item) -> str:
+            return "inner_top" if i.subcategory in self.inner_subs else i.category
+
         return Outfit(
-            items={i.category: i.id for i in chosen},
+            items={_slot(i): i.id for i in chosen},
             score=weights["aesthetic"] * a_score + weights["weather"] * w_score,
             aesthetic_score=a_score,
             weather_score=w_score,
@@ -186,6 +190,19 @@ def recommend(
         if by_slot.get(s)
     ]
 
+    # 이너 슬롯: layered 설정 조건을 모두 만족하면 이너 후보 추가 (없음/있음 모두 후보)
+    layered_cfg = cfg.get("layered", {})
+    inner_subs = set(layered_cfg.get("inner_subcategories", []))
+    inner_options: list[Item | None] = [None]
+    if (
+        inner_subs
+        and aesthetic_key in layered_cfg.get("aesthetic_keys", [])
+        and (sc.temp is None or sc.temp <= layered_cfg.get("max_temp_c", 23))
+    ):
+        inners = [i for i in by_slot.get("top", []) if i.subcategory in inner_subs]
+        if inners:
+            inner_options = [None, *inners]
+
     # 아우터: 추우면 필수, 아니면 없음/있음 모두 후보
     outers = by_slot.get(cfg["outer_slot"], [])
     if sc.outer_required and not outers:
@@ -194,12 +211,18 @@ def recommend(
         outers if sc.outer_required and outers else [None, *outers]
     )
 
-    # ponytail: 뼈대 × 아우터 전수 조합. 옷장이 수백 벌이면 슬롯별 상위 k개로 자른다
+    # 이너 소분류는 뼈대 상의에서 제외 — inner_options 경로에서만 사용
+    base_slot = dict(by_slot)
+    if inner_subs:
+        base_slot["top"] = [i for i in by_slot.get("top", []) if i.subcategory not in inner_subs]
+
+    # ponytail: 뼈대 × 아우터 × 이너 전수 조합. 옷장이 수백 벌이면 슬롯별 상위 k개로 자른다
     candidates = [
-        sc.outfit([*combo, *([outer] if outer else []), *extras])
+        sc.outfit([*combo, *([outer] if outer else []), *([inner] if inner else []), *extras])
         for base in cfg["bases"]
-        for combo in itertools.product(*(by_slot.get(s, []) for s in base))
+        for combo in itertools.product(*(base_slot.get(s, []) for s in base))
         for outer in outer_options
+        for inner in inner_options
     ]
 
     if not candidates:
