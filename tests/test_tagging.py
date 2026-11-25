@@ -256,3 +256,15 @@ def test_tag_item_integration():
 def test_subcategory_prompts_match_categories():
     subs = {s for v in _cfg("categories.yaml")["categories"].values() for s in v}
     assert set(_attr_cfg()["subcategory"]["prompts"]) <= subs
+
+
+def test_ai_skip_subcategories_never_candidates(fake_texts):
+    from app.pipeline.tagging import _category_candidates
+
+    cats = {"top": ["tshirt", "inner_tshirt", "knit"]}
+    fake_texts("inner", [1, 0, 0])
+    img = np.array([[1.0, 0.0, 0.0]])
+    prompts = {"inner_tshirt": ["inner"]}
+    got = _category_candidates(_Scorer(img, 100.0), cats, "top", prompts, skip=["inner_tshirt"])
+    assert "inner_tshirt" not in [c["subcategory"] for c in got]
+    assert _category_candidates(_Scorer(img, 100.0), cats, "top", prompts)[0]["subcategory"] == "inner_tshirt"

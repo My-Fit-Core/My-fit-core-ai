@@ -166,15 +166,19 @@ def _style_scores(sc: _Scorer, styles_cfg: dict) -> list[dict]:
 
 
 def _category_candidates(
-    sc: _Scorer, categories: dict, only: str | None, prompts: dict | None = None
+    sc: _Scorer, categories: dict, only: str | None, prompts: dict | None = None, skip=()
 ) -> list[dict]:
-    """소분류 후보 상위 3. 소분류마다 판정 문장(여러 개면 평균 logit)으로 점수를 낸다."""
+    """소분류 후보 상위 3. 소분류마다 판정 문장(여러 개면 평균 logit)으로 점수를 낸다.
+
+    skip에 있는 소분류(이너 등 사진으로 가를 수 없는 것)는 후보에 넣지 않는다.
+    """
     prompts = prompts or {}
     triples = [
         (cat, sub, prompts.get(sub) or [f"a photo of a {sub.replace('_', ' ')}"])
         for cat, subs in categories.items()
         if only is None or cat == only
         for sub in subs
+        if sub not in skip
     ]
     probs = _softmax(np.array([sc.logits(t[2]).mean() for t in triples]))
     top3 = np.argsort(probs)[::-1][:3]
@@ -230,8 +234,9 @@ def tag_item(
     img_feat = _encode_image(model, processor, crop_item(image, bbox, mask))  # (1, D)
     sc = _Scorer(img_feat, scale)
 
+    sub_cfg = attr_cfg.get("subcategory", {})
     candidates = _category_candidates(
-        sc, categories, category, attr_cfg.get("subcategory", {}).get("prompts")
+        sc, categories, category, sub_cfg.get("prompts"), sub_cfg.get("ai_skip", ())
     )
     cat = category or candidates[0]["category"]
     sub = candidates[0]["subcategory"]
