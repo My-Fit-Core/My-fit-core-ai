@@ -176,7 +176,7 @@ def main():
         for low, high in axis["prompts"]:
             groups += [{"prompts": [low]}, {"prompts": [high]}]
 
-    images_zip = find_zip(args.data_dir / "images")
+    images_zip = find_zip(args.data_dir / "images", allow_dir=True)
     kept, _ = dedupe(load_records(find_zip(args.data_dir / "labels"), images_zip))
     sampled = sample_per_style(kept, styles, args.per_style, args.seed)
     logit_rows = predict(sampled, images_zip, groups, args.batch_size, softmax=False)
