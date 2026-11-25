@@ -1,0 +1,142 @@
+# 추구미 7종 실험 설정 (issue #111). 서비스에는 아직 쓰지 않는다.
+# 기존 4종(미니멀·캐주얼·페미닌·스트리트)의 프롬프트는 configs/aesthetics.yaml과 같다(비교를 위해).
+# 빈티지 레이어드는 Y2K/빈티지와 보헤미안으로 나누고, 오피스/클래식을 추가했다.
+# style_id는 제안서(docs/reports/261126-*-style7-proposal.md)의 번호와 같다.
+
+aesthetics:
+  - key: minimal
+    style_id: 1
+    name: 미니멀
+    prompts:
+      outfit:
+        - "a clean outfit with simple silhouettes in neutral tones, minimalist style"
+        - "a plain white top with tailored black trousers, minimalist style"
+        - "a monochrome outfit in beige with no patterns or logos, minimalist style"
+        - "a sleek structured outfit in black and white with no decoration, minimalist style"
+      item:
+        - "tailored black wide-leg trousers with a clean crease, minimalist style"
+        - "a structured single-color blazer with clean lines, minimalist style"
+        - "a sleek monochrome long coat in beige, minimalist style"
+        - "a simple sleeveless slip dress in black, minimalist style"
+    kfashion:
+      styles: [모던]
+      note: "소피스트케이티드는 오피스/클래식으로 옮김(7종 실험)"
+  - key: casual
+    style_id: 2
+    name: 캐주얼
+    prompts:
+      outfit:
+        - "a plain white t-shirt with basic straight jeans and simple sneakers in a regular fit, casual style"
+        - "a solid gray knit sweater with regular-fit chinos, simple everyday casual style"
+        - "a plain navy t-shirt with basic straight jeans in a regular fit, casual style"
+        - "a solid-color button-up shirt with regular-fit chinos and simple sneakers, casual style"
+      item:
+        - "a plain white t-shirt in a regular fit, casual style"
+        - "a solid gray knit sweater, simple everyday casual style"
+        - "basic straight-leg blue jeans, casual style"
+        - "a solid-color button-up shirt in a regular fit, casual style"
+    kfashion:
+      styles: [스트리트, 톰보이]
+      note: "K-Fashion 스트리트는 일상복에 가까워 기본템인 캐주얼에 연결한다(issue #44)"
+  - key: feminine
+    style_id: 3
+    name: 러블리/페미닌
+    prompts:
+      outfit:
+        - "a soft feminine outfit with a ribbon blouse and flowy skirt in pastel tones, feminine style"
+        - "a ruffled pastel dress with a satin ribbon at the waist, feminine style"
+        - "a pastel pink ruffled blouse with a ribbon tie, feminine style"
+        - "a sweet outfit with ribbon bows and tiered ruffles in pastel colors, feminine style"
+      item:
+        - "a pastel ruffled blouse with a ribbon tie, feminine style"
+        - "a flowy floral midi skirt in soft pink, feminine style"
+        - "a lace-trimmed dress with puff sleeves, feminine style"
+        - "a cropped cardigan with pearl buttons in pastel colors, feminine style"
+    kfashion:
+      styles: [로맨틱, 페미닌]
+  - key: street
+    style_id: 4
+    name: 걸리시 스트릿
+    prompts:
+      outfit:
+        - "an oversized graphic hoodie with baggy cargo pants and a baseball cap, street style"
+        - "an oversized sweatshirt with a big logo print, wide cargo pants and a snapback cap, street style"
+        - "a loose graphic print hoodie with cargo pants and a backwards cap, street style"
+        - "an oversized logo hoodie with baggy cargo pants and a cap, urban street style"
+      item:
+        - "an oversized graphic hoodie, street style"
+        - "baggy cargo pants with large side pockets, street style"
+        - "an oversized sweatshirt with a big logo print, street style"
+        - "an oversized varsity bomber jacket with patches, street style"
+    kfashion:
+      styles: [힙합, 스포티]
+      note: "K-Fashion 스트리트는 일상복에 가까워 우리 스트리트와 다르다(issue #44). 캐주얼에 연결"
+  - key: y2k_vintage
+    style_id: 5
+    name: Y2K/빈티지
+    prompts:
+      outfit:
+        - "a cropped baby tee with low-rise flared jeans and a mini shoulder bag, y2k style"
+        - "a retro outfit with a vintage printed shirt and faded washed denim, retro vintage style"
+        - "a kitschy colorful outfit with butterfly prints and rhinestones, y2k style"
+        - "a grunge outfit with ripped denim and an oversized plaid flannel shirt, 90s vintage style"
+      item:
+        - "a cropped baby tee with a cute retro print, y2k style"
+        - "low-rise flared jeans in a faded wash, y2k style"
+        - "a vintage shirt with a retro pattern, retro style"
+        - "a faded oversized plaid flannel shirt, grunge style"
+    kfashion:
+      styles: [레트로, 키치, 펑크]
+      note: "세 스타일 모두 표본이 적다(각 1% 미만). 레퍼런스 사진으로 다시 확인 필요"
+  - key: office_classic
+    style_id: 6
+    name: 오피스/클래식
+    prompts:
+      outfit:
+        - "a tailored blazer with a silk blouse and straight trousers, classic office style"
+        - "a tweed jacket with a pleated skirt and pumps, elegant classic style"
+        - "a beige trench coat over a neat shirt and slacks, classic style"
+        - "a matching suit set with a crisp white shirt, polished office look"
+      item:
+        - "a tailored navy blazer, classic office style"
+        - "a tweed jacket with gold buttons, classic style"
+        - "a beige double-breasted trench coat, classic style"
+        - "a crisp white silk blouse, elegant office style"
+    kfashion:
+      styles: [클래식, 소피스트케이티드, 프레피]
+  - key: bohemian
+    style_id: 7
+    name: 보헤미안
+    prompts:
+      outfit:
+        - "a flowy floral maxi skirt with a loose peasant blouse and fringe details, bohemian style"
+        - "a boho outfit with a crochet top, layered necklaces and suede boots, boho chic style"
+        - "a western outfit with a fringe suede jacket, a leopard print scarf and cowboy boots, western boho style"
+        - "a loose embroidered tunic dress in earthy tones with a wide studded belt, bohemian style"
+      item:
+        - "a flowy floral maxi skirt, bohemian style"
+        - "a fringe suede jacket in camel, western boho style"
+        - "a loose embroidered peasant blouse, bohemian style"
+        - "a crochet knit top in earthy tones, boho style"
+    kfashion:
+      styles: [히피, 웨스턴, 컨트리, 리조트]
+
+axes:
+  - key: casual_formal
+    low: 캐주얼
+    high: 포멀
+    prompts:
+      - ["a casual everyday outfit", "a formal dressed-up outfit"]
+      - ["relaxed comfortable clothes for a weekend", "polished clothes for an office or a ceremony"]
+  - key: muted_colorful
+    low: 뮤트
+    high: 컬러풀
+    prompts:
+      - ["an outfit in muted neutral colors", "an outfit in bright vivid colors"]
+      - ["a toned-down outfit in black, white, gray or beige", "a colorful outfit with bold saturated colors"]
+  - key: subtle_statement
+    low: 은은한
+    high: 스테이트먼트
+    prompts:
+      - ["a subtle understated outfit", "a bold statement outfit that stands out"]
+      - ["simple quiet clothes with no eye-catching details", "eye-catching clothes with dramatic details"]
