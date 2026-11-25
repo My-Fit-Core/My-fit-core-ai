@@ -1,13 +1,20 @@
 """AI 서버 엔트리포인트.
 
-분석(/v1/analyze)은 아직 접수 응답만 돌려준다(실제 파이프라인은 #101).
+분석(/v1/analyze)은 접수 응답을 바로 주고, 분석은 뒤에서 돌려 결과를 callback_url로 보낸다(#101).
 추천은 recommend/scoring.py를 쓴다.
+
+인증: 백엔드 → AI 서버 요청은 공유 비밀키 헤더(X-AI-Server-Secret, 이름은 제안)로 확인한다.
+환경변수 AI_SERVER_SECRET이 비어 있으면 확인하지 않는다(개발용).
 """
 
+import logging
+import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 
+import httpx
 import yaml
-from fastapi import FastAPI, HTTPException
+from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException
 
 # ML 패키지(cv2, torch 등)가 없는 환경(기본 requirements.txt)에서도 서버가 뜨도록 lazy import
 try:
@@ -35,7 +42,29 @@ from recommend.scoring import swap as _scoring_swap
 
 MODEL_VERSION = "mock-0"
 
-app = FastAPI(title="MyFit AI Server", version=API_VERSION)
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # 모델은 서버 시작 때 한 번 불러온다(02-specs §8). 첫 요청이 모델 로드 시간(CPU에서 1~2분)을 기다리지 않게.
+    # TestClient(app)를 with 없이 쓰면 이 단계를 건너뛴다.
+    if _ML_AVAILABLE and os.getenv("PRELOAD_MODELS", "1") == "1":
+        try:
+            detection.load_detector()
+            _tagging.load_tagger()
+        except Exception:
+            log.exception("모델 미리 불러오기 실패: 첫 분석 요청에서 다시 시도한다")
+    yield
+
+
+app = FastAPI(title="MyFit AI Server", version=API_VERSION, lifespan=lifespan)
+log = logging.getLogger(__name__)
+SECRET_HEADER = "X-AI-Server-Secret"
+DOWNLOAD_TIMEOUT_S = 15.0
+
+
+def require_secret(secret: str | None = Header(default=None, alias=SECRET_HEADER)) -> None:
+    expected = os.getenv("AI_SERVER_SECRET", "")
+    if expected and secret != expected:
+        raise HTTPException(status_code=401, detail="인증 실패")
 
 
 def _model_status(loader) -> str:
@@ -61,9 +90,36 @@ def health() -> dict:
     }
 
 
-@app.post(f"/{API_VERSION}/analyze", response_model=AnalyzeAccepted)
-def analyze(req: AnalyzeRequest) -> AnalyzeAccepted:
-    # TODO(#101): 실제 파이프라인 + 콜백으로 교체. 결과 형식은 docs/api-v1-examples.json
+def _run_job(req: AnalyzeRequest) -> None:
+    """뒤에서 분석하고 결과를 콜백으로 보낸다. 예외를 밖으로 던지지 않는다."""
+    from app.callback import send_result
+    from app.pipeline.analyze import UploadError, run_analysis
+
+    with httpx.Client(timeout=DOWNLOAD_TIMEOUT_S) as client:
+
+        def fetch(url: str) -> bytes:
+            res = client.get(url)
+            res.raise_for_status()
+            return res.content
+
+        def upload(url: str, png: bytes) -> None:
+            try:
+                client.put(url, content=png, headers={"Content-Type": "image/png"}).raise_for_status()
+            except httpx.HTTPError as e:
+                raise UploadError(str(e)) from e
+
+        result = run_analysis(req, fetch, upload)
+        send_result(req.callback_url, result, client)
+
+
+@app.post(
+    f"/{API_VERSION}/analyze",
+    response_model=AnalyzeAccepted,
+    dependencies=[Depends(require_secret)],
+)
+def analyze(req: AnalyzeRequest, background: BackgroundTasks) -> AnalyzeAccepted:
+    # ponytail: 작업 큐 없이 프로세스 안에서 돈다. 서버가 재시작되면 진행 중이던 작업은 사라진다
+    background.add_task(_run_job, req)
     return AnalyzeAccepted(job_id=req.job_id, job_status="queued")
 
 
@@ -100,7 +156,11 @@ def _to_scoring_weather(w) -> ScoringWeather:
     )
 
 
-@app.post(f"/{API_VERSION}/recommend", response_model=RecommendResult)
+@app.post(
+    f"/{API_VERSION}/recommend",
+    response_model=RecommendResult,
+    dependencies=[Depends(require_secret)],
+)
 def recommend(req: RecommendRequest) -> RecommendResult:
     items = _to_scoring_items(req.wardrobe)
     weather = _to_scoring_weather(req.weather)
@@ -116,7 +176,11 @@ def recommend(req: RecommendRequest) -> RecommendResult:
     )
 
 
-@app.post(f"/{API_VERSION}/recommend/swap", response_model=SwapResult)
+@app.post(
+    f"/{API_VERSION}/recommend/swap",
+    response_model=SwapResult,
+    dependencies=[Depends(require_secret)],
+)
 def recommend_swap(req: SwapRequest) -> SwapResult:
     items = _to_scoring_items(req.wardrobe)
     weather = _to_scoring_weather(req.weather)

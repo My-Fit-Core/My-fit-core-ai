@@ -11,3 +11,21 @@ categories:
   shoes: [sneakers, flats, loafers, heels, boots, sandals]
   bag: [shoulder_bag, tote_bag, backpack, crossbody_bag]
   accessory: [hat, scarf, jewelry]
+
+# 검출기(DeepFashion2 YOLO) 클래스 → 대분류와 소매 (분석 파이프라인 #101).
+# 대분류는 검출기 클래스로 정하고(261108-0315-01-category-poc.md), 소분류는 태깅이 그 대분류 안에서 고른다.
+# 소매는 클래스 이름에 short/long이 있을 때만 정하고, 나머지는 태깅 판정을 쓴다.
+detector_classes:
+  short_sleeved_shirt: {category: top, sleeve: short}
+  long_sleeved_shirt: {category: top, sleeve: long}
+  short_sleeved_outwear: {category: outerwear, sleeve: short}
+  long_sleeved_outwear: {category: outerwear, sleeve: long}
+  vest: {category: top}
+  sling: {category: top}
+  shorts: {category: bottom}
+  trousers: {category: bottom}
+  skirt: {category: bottom}
+  short_sleeved_dress: {category: dress, sleeve: short}
+  long_sleeved_dress: {category: dress, sleeve: long}
+  vest_dress: {category: dress}
+  sling_dress: {category: dress}
