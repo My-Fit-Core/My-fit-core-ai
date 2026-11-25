@@ -1,0 +1,77 @@
+{
+  "_note": "API v1 예시 (issue #114). 스키마 정의는 app/schemas.py. tests/test_schemas.py가 이 파일이 스키마와 맞는지 확인한다.",
+  "analyze_request": {
+    "job_id": "8f1c2a7e-0000-4000-8000-000000000001",
+    "image_url": "https://storage.example.com/raw/u1/photo.jpg?token=...",
+    "callback_url": "https://backend.example.com/api/ai/analyze-callback",
+    "items": [
+      {"client_item_key": "k1", "upload_url": "https://storage.example.com/cutout/u1/k1.png?token=...", "path": "cutout/u1/k1.png"},
+      {"client_item_key": "k2", "upload_url": "https://storage.example.com/cutout/u1/k2.png?token=...", "path": "cutout/u1/k2.png"}
+    ],
+    "category": null
+  },
+  "analyze_accepted": {"job_id": "8f1c2a7e-0000-4000-8000-000000000001", "job_status": "queued"},
+  "analyze_result_partial": {
+    "job_id": "8f1c2a7e-0000-4000-8000-000000000001",
+    "result_status": "partial_failed",
+    "model_version": "fashion-clip-vitb32+deepfashion2-yolov8s",
+    "embedding_model": "fashion-clip-vitb32",
+    "items": [
+      {
+        "client_item_key": "k1",
+        "cutout_path": "cutout/u1/k1.png",
+        "bbox": [0.08, 0.12, 0.52, 0.61],
+        "category": "top",
+        "subcategory": "knit",
+        "category_candidates": [
+          {"category": "top", "subcategory": "knit", "score": 0.71},
+          {"category": "top", "subcategory": "sweatshirt", "score": 0.14},
+          {"category": "outerwear", "subcategory": "cardigan", "score": 0.06}
+        ],
+        "colors": [{"hex": "#F2EDE4", "ratio": 0.83}, {"hex": "#C9BFB1", "ratio": 0.17}],
+        "pattern": "solid",
+        "style_scores": [
+          {"style_id": 1, "score": 0.31},
+          {"style_id": 2, "score": 0.44},
+          {"style_id": 3, "score": 0.82},
+          {"style_id": 4, "score": 0.12},
+          {"style_id": 5, "score": 0.41},
+          {"style_id": 6, "score": 0.20},
+          {"style_id": 7, "score": 0.35}
+        ],
+        "fit": "oversized",
+        "off_shoulder": true,
+        "sleeve": "long",
+        "material": "knit",
+        "details": [],
+        "embedding": [0.0123, -0.0456, 0.0789]
+      }
+    ],
+    "errors": [
+      {"code": "STORAGE_UNAVAILABLE", "message": "누끼 업로드 실패", "client_item_key": "k2"}
+    ]
+  },
+  "analyze_result_failed": {
+    "job_id": "8f1c2a7e-0000-4000-8000-000000000002",
+    "result_status": "failed",
+    "model_version": "fashion-clip-vitb32+deepfashion2-yolov8s",
+    "embedding_model": null,
+    "items": [],
+    "errors": [{"code": "NO_GARMENT_DETECTED", "message": "옷을 찾지 못했습니다", "client_item_key": null}]
+  },
+  "recommend_request": {
+    "weather": {"temperature": 8.5, "feels_like": 6.0, "precipitation_type": "none", "humidity": 45, "wind_speed": 3.2, "precipitation_prob": 10},
+    "main_style_id": 3,
+    "sub_style_ids": [5, 7],
+    "wardrobe": [
+      {"item_id": "i1", "category": "top", "subcategory": "knit", "style_scores": [{"style_id": 3, "score": 0.82}, {"style_id": 5, "score": 0.41}], "fit": "oversized", "off_shoulder": true, "sleeve": "long", "material": "knit", "warmth": "warm"},
+      {"item_id": "i2", "category": "bottom", "subcategory": "long_skirt", "style_scores": [{"style_id": 3, "score": 0.66}]},
+      {"item_id": "i3", "category": "outerwear", "subcategory": "coat", "style_scores": [{"style_id": 3, "score": 0.40}], "fit": "oversized", "material": "fur"},
+      {"item_id": "i4", "category": "shoes", "subcategory": "boots", "material": "suede"}
+    ]
+  },
+  "recommend_result": {
+    "sets": [{"item_ids": ["i1", "i2", "i3", "i4"], "score": 0.71}],
+    "reasons": ["fewer_than_requested"]
+  }
+}

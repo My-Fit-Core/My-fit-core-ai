@@ -26,9 +26,13 @@ def test_health_models_field_exists():
     assert "tagger" in body["models"]
 
 
-def test_analyze_mock_matches_schema():
-    res = client.post("/v0/analyze", json={"job_id": "test", "image_url": "https://example.com/a.jpg"})
+def test_analyze_accepts_job():
+    body = {
+        "job_id": "test",
+        "image_url": "https://example.com/a.jpg",
+        "callback_url": "https://example.com/cb",
+        "items": [{"client_item_key": "k1", "upload_url": "https://example.com/k1.png"}],
+    }
+    res = client.post("/v1/analyze", json=body)
     assert res.status_code == 200
-    body = res.json()
-    assert body["job_id"] == "test"
-    assert body["items"][0]["category"]
+    assert res.json() == {"job_id": "test", "job_status": "queued"}

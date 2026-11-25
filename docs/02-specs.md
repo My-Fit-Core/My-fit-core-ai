@@ -16,8 +16,8 @@
 - AI 서버는 GPU가 필요한 추론과 추천 계산을 담당한다. 인증(JWT), 날씨 수집·캐시, DB 저장은 백엔드 책임.
 - 서빙 플랫폼: `TBD` (후보: Modal, RunPod Serverless, 직접 GPU 서버). FastAPI + Docker 이미지 하나로 어디든 옮길 수 있게 유지한다.
 - 결과 전달 방식: 분석은 비동기로 처리하고 결과를 백엔드에 **콜백**으로 보낸다 `[확인]`(10/12 회의 안건 4). 추천은 동기 응답(안건 2, 4).
-- 콜백 URL 전달 방식과 콜백 인증: `TBD`
-- 백엔드 → AI 서버 인증 방식: `TBD`
+- 콜백: 분석 요청마다 `callback_url`을 받는다. AI 서버 → 백엔드 콜백은 HMAC 서명을 붙이고, 키는 환경변수 `AI_CALLBACK_HMAC_SECRET`이다(11/25 백엔드 답변). 서명 대상·헤더 이름·시간 허용 범위는 `TBD`(제안: `X-AI-Timestamp` + `X-AI-Signature: sha256=<hex>`, 서명 대상 `timestamp + "." + 본문`, 5분).
+- 백엔드 → AI 서버 인증: 공유 비밀키 헤더(11/25 백엔드 동의). 헤더 이름은 `TBD`(제안: `X-AI-Server-Secret`).
 
 ## 2. 기술 스택
 
@@ -30,48 +30,24 @@
 | 태깅·임베딩 | FashionCLIP (zero-shot) | 입력은 마스크 밖을 흰색으로 지우고 박스로 자른 사진(`261108-0315-01-category-poc.md`). 색상은 마스크 픽셀 k-means |
 | 추천 | 규칙 기반 점수 함수 (`recommend/`) | GPU 불필요. AI 서버에서 실행, 동기 응답(10/12 회의 안건 2, 4) |
 | LLM 코멘트 (P1) | 경량 LLM API | 모델 `TBD` |
-| 벡터 저장 | Supabase pgvector (백엔드 DB) | 임베딩 차원은 모델 확정 후 기록. 임베딩을 분석 응답·추천 요청에 담는 방식 `TBD` |
+| 벡터 저장 | Supabase pgvector (백엔드 DB) | 분석 결과에 옷별 임베딩과 `embedding_model`을 담고, 백엔드가 등록한 옷과 연결해 저장한다(11/25 백엔드 답변). FashionCLIP ViT-B/32, 512차원, L2 정규화, 코사인 유사도(= 내적). 백엔드 확인 대기 |
 
 - 패키지 버전: `requirements.txt`는 현재 버전으로 고정한다(10/12 회의 안건 10).
 
 ## 3. API 계약 (백엔드 ↔ AI 서버)
 
-현재 버전: **v0 (초안)**. 실제 정의는 `app/schemas.py`가 기준이며, 이 섹션과 다르면 어긋남을 보고한다.
-10/12 회의에서 합의된 v1 내용은 아래 "v1 합의 사항"에 따로 적었다. 스키마와 예시 JSON 반영은 T6에서 버전을 올리며 한다.
+현재 버전: **v1 (초안, issue #114)**. 실제 정의는 `app/schemas.py`가 기준이고, 예시는 `docs/api-v1-examples.json`이다(테스트가 둘이 맞는지 확인). 이 섹션과 다르면 어긋남을 보고한다.
 
-### POST `/v0/analyze` — 다중 의류 분석 요청 (현재 구현 v0)
-
-요청
-```json
-{
-  "job_id": "uuid",
-  "image_url": "원본 이미지 signed URL",
-  "callback_url": "선택, TBD",
-  "max_items": 6
-}
-```
-
-응답(결과)
-```json
-{
-  "job_id": "uuid",
-  "status": "done | failed",
-  "model_version": "v0.1",
-  "items": [
-    {
-      "bbox": [0, 0, 100, 100],
-      "mask_path": "누끼 PNG 저장 경로",
-      "category": "top.knit",
-      "category_conf": 0.93,
-      "colors": [{"hex": "#2B2B2B", "ratio": 0.71}],
-      "pattern": "solid",
-      "aesthetic_scores": {"feminine": 0.08, "street": 0.12, "minimal": 0.46, "vintage_layered": 0.12, "casual": 0.22},
-      "embedding": [0.0]
-    }
-  ],
-  "error": null
-}
-```
+v1 요약
+- `POST /v1/analyze`: 요청 `{job_id, image_url, callback_url, items[{client_item_key, upload_url, path?}], category?}` → 즉시 `{job_id, job_status}`. 결과(`AnalyzeResult`)는 `callback_url`로 보낸다.
+  - `items`는 누끼 업로드 대상 1~6개. 검출된 옷을 신뢰도 높은 순으로 앞에서부터 배정한다.
+  - `category`가 있으면(신발·가방 직접 등록) 검출 없이 사진 전체를 한 벌로 본다.
+- 결과 옷마다: `client_item_key`, `cutout_path`, `bbox`(0~1), `category`, `subcategory`, `category_candidates`(상위 3), `colors`, `pattern`, `style_scores[{style_id, score}]`, 숨은 속성(`fit`, `off_shoulder`, `sleeve`, `material`, `details`), `embedding`.
+  - `style_scores`는 스타일마다 따로 매긴 0~1 점수이며 합이 1이 아니다. `style_id`는 백엔드 style 테이블의 메인 스타일 id다.
+  - 숨은 속성은 화면에 표시하지 않고 추천에만 쓴다. 불확실하면 `null`, `details`의 빈 목록은 "확인된 것 없음"이다. 값 목록은 `configs/attributes.yaml`.
+- 결과 상태 `result_status`: `succeeded` / `partial_failed` / `failed`(아래 v1 합의 사항).
+- `POST /v1/recommend`, `/v1/recommend/swap`: `{weather, main_style_id, sub_style_ids, wardrobe[...]}`. 옷장 아이템에는 분석 결과(소분류·스타일 점수·숨은 속성)와 사용자가 고른 `warmth`(선택)를 담는다.
+- 값 목록(카테고리·패턴·소재·디테일)은 문자열로 주고받는다. enum으로 받을지는 백엔드 확인 대기.
 
 ### v1 합의 사항 (10/12 회의, 스키마 반영은 T6)
 
@@ -113,7 +89,7 @@
 ### 좌표 규칙
 
 - `bbox`는 회전 보정된 이미지 기준 정규화 좌표(0~1)이며 `[x_min, y_min, x_max, y_max]` 순서다. 왼쪽 위가 (0, 0)이다(안건 9).
-- 위 v0 예시와 `app/schemas.py`의 `bbox`(`list[int]`)는 아직 이 규칙을 반영하지 않았다. 스키마 버전을 올릴 때 함께 바꾼다.
+- v1 스키마(`app/schemas.py`)는 이 규칙대로 `bbox`를 0~1 float로 둔다.
 
 ### 추천 API (10/12 회의 안건 2, 3, 4)
 

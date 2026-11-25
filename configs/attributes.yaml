@@ -1,0 +1,29 @@
+# 옷 속성 값 목록 (API v1, issue #114). 값은 문자열로 주고받는다.
+# 숨은 속성(fit, off_shoulder, sleeve, material, details)은 화면에 표시하지 않고 추천에만 쓴다.
+# 판정 방법과 정확도 기준은 태깅 작업에서 정한다. 근거: docs/reports/261125-2258-01-mentoring-feedback-ai-plan.md
+
+# 안건 7 초안. 백엔드 확정 대기
+patterns: [solid, stripe, check, dot, floral, animal, graphic, other]
+
+fit: [oversized, regular, slim]
+sleeve: [short, long]  # 민소매는 소분류 sleeveless
+
+# 추천에서 따뜻함·비 오는 날 판단에 쓴다. 사진으로 구분이 안 되는 것(가죽/인조가죽 등)은 나누지 않는다
+materials:
+  - denim
+  - knit
+  - cotton_jersey   # 면·저지
+  - leather
+  - suede
+  - fur             # 퍼·무스탕
+  - wool_tweed
+  - linen
+  - chiffon_satin
+  - nylon_padding
+  - other
+
+# 여러 개 가능. 정확도가 확인된 것만 채운다(빈 목록 = 확인된 것 없음)
+details: [ribbon, frill, lace, studs, fringe, fur_trim]
+
+# 사용자가 등록 화면에서 고르는 따뜻함(선택). 없으면 소분류 기본값
+warmth: [thin, normal, warm]
