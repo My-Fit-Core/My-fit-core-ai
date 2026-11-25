@@ -13,8 +13,8 @@
 ## 완료 조건
 
 - [x] `app/pipeline/tagging.py` — `crop_item`, `load_tagger`, `tag_item`, `TagResult`
-- [x] `tests/test_tagging.py` — 단위 테스트(모델 불필요), 통합 테스트(open_clip skip)
-- [ ] ruff / pytest 통과 확인
+- [x] `tests/test_tagging.py` — 단위 테스트(모델 불필요), 통합 테스트(transformers·torch 없으면 skip)
+- [x] ruff / pytest 통과 확인 — 통합 테스트가 실제 모델로 통과(2026-11-25, PR #88)
 - [ ] 00-todo-list.md 상태 갱신
 
 ## 맥락
@@ -28,9 +28,10 @@
 ## 진행 메모
 
 - 2026-11-24: `app/pipeline/tagging.py`, `tests/test_tagging.py` 작성. 카테고리 소분류는 TBD 상태로 configs 초안을 그대로 사용.
+- 2026-11-25: 모델 로드 404(open_clip → transformers)와 점수 스케일 누락 수정, yaml utf-8 (PR #88, `261125-0943-01-tagging-model-load-fix.md`).
 
 ## 열린 질문
 
 - [ ] 소분류 목록 확정 (T2) — 확정되면 `configs/categories.yaml`만 수정
 - [ ] 패턴 값 목록 백엔드 ERD 동의 (T3, 안건 7)
-- [ ] 임베딩 차원 (`model_version` 기록 후 백엔드에 전달, T3 안건 4)
+- [ ] 임베딩 차원 (`model_version` 기록 후 백엔드에 전달, T3 안건 4) — 실제 확인 결과 512차원(`fashion-clip-vitb32`)

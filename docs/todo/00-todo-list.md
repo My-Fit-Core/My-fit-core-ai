@@ -26,7 +26,7 @@
 | 완료 | YOLO 검출+마스크 모듈 (T8) | F-201, F-202 | `yolo-detection.md` | `261123-1544-01-yolo-detection.md` |
 | 완료 | 02-specs.md를 10/12 회의 결정에 맞게 갱신 (T24) | 문서 | `specs-1012-decisions.md` | `261123-1624-01-specs-1012-decisions.md` |
 | 완료 | 색상·패턴 추출 (T10, 색상 완료·패턴은 tagging.py에서 FashionCLIP으로 처리) | F-203 | `color-pattern.md` | `261123-1641-01-color-extraction.md` (색상) |
-| 진행중 | FashionCLIP zero-shot 태깅 (T11) | F-203 | `fashionclip-tagging.md` | |
+| 진행중 | FashionCLIP zero-shot 태깅 (T11, 모델 로드 수정 완료·T2 소분류 대기) | F-203 | `fashionclip-tagging.md` | `261125-0943-01-tagging-model-load-fix.md` (수정) |
 | 완료 | "15대 추구미"·TPO 표현 정리 (T22) | 문서 | `docs-wording-cleanup.md` | `261123-1643-01-docs-wording-cleanup.md` |
 | 완료 | K-Fashion 데이터 준비와 FashionCLIP 스타일 평가 | F-203, F-302 | `kfashion-style-eval.md` | `261031-2152-01-kfashion-style-eval.md` |
 | 완료 | 추구미 설명형 프롬프트, 비율 보정, 반대 개념 축 측정 | F-203, F-302 | `aesthetic-display.md` | `261108-0230-01-aesthetic-display.md` |
