@@ -16,7 +16,8 @@ _config = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8"))
 
 ALLOWED_FORMATS = set(_config["allowed_formats"])
 MAX_BYTES = int(_config["max_mb"] * 1024 * 1024)
-MAX_LONG_SIDE = 2048
+MAX_LONG_SIDE = 2048  # 이보다 크면 줄인다(안건 6: 프론트가 줄여 올리고, AI 서버 리사이즈는 대비용으로 유지)
+HARD_MAX_SIDE = 8192  # 이보다 크면 디코딩 전에 거절한다(디컴프레션 폭탄 방어)
 MIN_SHORT_SIDE = 512
 
 
@@ -42,10 +43,12 @@ def validate_image(data: bytes) -> ValidatedImage:
         if fmt not in ALLOWED_FORMATS:
             raise ImageValidationError("unsupported_format", f"format {img.format}")
         # 픽셀 디코딩 전에 헤더 크기로 거절한다 (디컴프레션 폭탄 방어)
-        if max(img.size) > MAX_LONG_SIDE:
+        if max(img.size) > HARD_MAX_SIDE:
             raise ImageValidationError("long_side_exceeded", f"size {img.size}")
         img.load()
         img = ImageOps.exif_transpose(img)
+        if max(img.size) > MAX_LONG_SIDE:
+            img.thumbnail((MAX_LONG_SIDE, MAX_LONG_SIDE))  # 비율 유지, bbox는 정규화 좌표라 영향 없음
         # ponytail: 알파는 버리기만 한다(투명 픽셀 아래 RGB가 그대로 드러남). 흰 배경 합성 여부는 미정
         img = img.convert("RGB")
     except (UnidentifiedImageError, OSError, Image.DecompressionBombError) as e:

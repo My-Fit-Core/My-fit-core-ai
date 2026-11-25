@@ -26,7 +26,12 @@ def test_health_models_field_exists():
     assert "tagger" in body["models"]
 
 
-def test_analyze_accepts_job():
+def test_analyze_accepts_job(monkeypatch):
+    """접수 응답을 바로 주고 분석은 뒤에서 돈다(여기서는 실제 분석을 막는다)."""
+    import app.main
+
+    ran = []
+    monkeypatch.setattr(app.main, "_run_job", lambda req: ran.append(req.job_id))
     body = {
         "job_id": "test",
         "image_url": "https://example.com/a.jpg",
@@ -36,6 +41,19 @@ def test_analyze_accepts_job():
     res = client.post("/v1/analyze", json=body)
     assert res.status_code == 200
     assert res.json() == {"job_id": "test", "job_status": "queued"}
+    assert ran == ["test"]
+
+
+def test_secret_header_required_when_set(monkeypatch):
+    monkeypatch.setenv("AI_SERVER_SECRET", "s3cret")
+    res = client.post("/v1/recommend", json={"weather": {}, "main_style_id": 1, "wardrobe": []})
+    assert res.status_code == 401
+    res = client.post(
+        "/v1/recommend",
+        json={"weather": {}, "main_style_id": 1, "wardrobe": []},
+        headers={"X-AI-Server-Secret": "s3cret"},
+    )
+    assert res.status_code != 401
 
 
 def test_recommend_v1_example_request():

@@ -5,6 +5,7 @@ from PIL import Image
 
 from app.pipeline.image_input import (
     ALLOWED_FORMATS,
+    HARD_MAX_SIDE,
     MAX_BYTES,
     ImageValidationError,
     validate_image,
@@ -73,11 +74,17 @@ def test_file_too_large():
     assert _reason(b"\0" * (MAX_BYTES + 1)) == "file_too_large"
 
 
-def test_long_side_limit():
-    too_long = _encode(Image.new("RGB", (2049, 600)), "PNG")
-    assert _reason(too_long) == "long_side_exceeded"
+def test_long_side_resized_not_rejected():
+    """2048px보다 크면 거절하지 않고 비율을 유지해 줄인다(안건 6)."""
     ok = validate_image(_encode(Image.new("RGB", (2048, 600)), "PNG"))
     assert ok.image.size == (2048, 600)
+    big = validate_image(_encode(Image.new("RGB", (4096, 1200)), "PNG"))
+    assert big.image.size == (2048, 600)
+
+
+def test_hard_side_limit():
+    too_long = _encode(Image.new("RGB", (HARD_MAX_SIDE + 1, 10)), "PNG")
+    assert _reason(too_long) == "long_side_exceeded"
 
 
 def test_short_side_warning():
