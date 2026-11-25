@@ -165,14 +165,18 @@ def _style_scores(sc: _Scorer, styles_cfg: dict) -> list[dict]:
     ]
 
 
-def _category_candidates(sc: _Scorer, categories: dict, only: str | None) -> list[dict]:
+def _category_candidates(
+    sc: _Scorer, categories: dict, only: str | None, prompts: dict | None = None
+) -> list[dict]:
+    """소분류 후보 상위 3. 소분류마다 판정 문장(여러 개면 평균 logit)으로 점수를 낸다."""
+    prompts = prompts or {}
     triples = [
-        (cat, sub, f"a photo of a {sub.replace('_', ' ')}")
+        (cat, sub, prompts.get(sub) or [f"a photo of a {sub.replace('_', ' ')}"])
         for cat, subs in categories.items()
         if only is None or cat == only
         for sub in subs
     ]
-    probs = _softmax(sc.logits([t[2] for t in triples]))
+    probs = _softmax(np.array([sc.logits(t[2]).mean() for t in triples]))
     top3 = np.argsort(probs)[::-1][:3]
     return [
         {"category": triples[i][0], "subcategory": triples[i][1], "score": float(probs[i])}
@@ -226,7 +230,9 @@ def tag_item(
     img_feat = _encode_image(model, processor, crop_item(image, bbox, mask))  # (1, D)
     sc = _Scorer(img_feat, scale)
 
-    candidates = _category_candidates(sc, categories, category)
+    candidates = _category_candidates(
+        sc, categories, category, attr_cfg.get("subcategory", {}).get("prompts")
+    )
     cat = category or candidates[0]["category"]
     sub = candidates[0]["subcategory"]
     attrs = _attributes(sc, attr_cfg, cat, sub)
