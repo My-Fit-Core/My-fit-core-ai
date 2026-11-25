@@ -5,7 +5,6 @@
 torch
 torchvision
 transformers
-open_clip_torch
 opencv-python-headless
 ultralytics
 numpy
