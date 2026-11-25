@@ -210,6 +210,7 @@ def main():
         "--neckline-test", type=int,
         help="오프숄더 재현율용: 상의·원피스 넥라인이 오프숄더·원숄더인 사진 N장과 아닌 사진 N장만 뽑는다",
     )
+    ap.add_argument("--name-prompts", action="store_true", help="소분류를 이름 문장(예전 방식)으로 판정해 비교")
     ap.add_argument("--style-configs", nargs="+", default=["configs/aesthetics.yaml", "configs/styles.yaml"])
     args = ap.parse_args()
 
@@ -237,7 +238,8 @@ def main():
     for m in matched:
         sc = tagging._Scorer(emb[m["emb"]][None, :], scale)
         cat = m["pred_category"]
-        cands = tagging._category_candidates(sc, categories, cat)
+        sub_cfg = {} if args.name_prompts else attr_cfg.get("subcategory", {})
+        cands = tagging._category_candidates(sc, categories, cat, sub_cfg.get("prompts"), sub_cfg.get("ai_skip", ()))
         a = tagging._attributes(sc, attr_cfg, cat, cands[0]["subcategory"])
         sleeve = {"short_sleeved_shirt": "short", "long_sleeved_shirt": "long", "short_sleeved_outwear": "short",
                   "long_sleeved_outwear": "long", "short_sleeved_dress": "short", "long_sleeved_dress": "long"}.get(m["df2"])
