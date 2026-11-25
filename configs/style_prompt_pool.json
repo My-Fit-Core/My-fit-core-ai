@@ -1,0 +1,79 @@
+{
+  "_note": "추구미 7종 문장 후보 (issue #111, 실험용). 제안서의 스타일 정의(느낌·대표 아이템·하위 태그) 안에서만 썼다. scripts/tune_style_prompts.py가 여기서 고른다.",
+  "minimal": [
+    "a monochrome all-black outfit with sleek modern lines, minimalist style",
+    "a crisp white shirt with wide black trousers in a sharp monotone look, minimalist style",
+    "an all-gray tonal outfit with a long sleek coat, modern minimalist style",
+    "a sleek monochrome outfit in black and white with a sharp modern silhouette, minimalist style",
+    "a neutral beige tonal outfit with clean modern lines, minimalist style",
+    "a black turtleneck with straight black trousers, modern minimalist look",
+    "an oversized long black coat over a monotone outfit, modern minimalist style",
+    "a clean girl outfit in white and cream with a sleek bun, minimal style"
+  ],
+  "casual": [
+    "a basic gray sweatshirt with blue jeans and white sneakers, everyday casual style",
+    "a plain hooded zip-up with straight jeans, simple daily casual style",
+    "a striped long-sleeve t-shirt with jeans, simple casual style",
+    "a cardigan over a t-shirt with cotton pants, comfy casual style",
+    "a comfortable everyday outfit with a sweatshirt, jeans and sneakers, casual style",
+    "a denim jacket over a t-shirt with jeans, everyday campus casual style",
+    "a loose knit sweater with wide jeans and sneakers, comfy casual style",
+    "a plain white t-shirt with basic straight jeans and simple sneakers in a regular fit, casual style"
+  ],
+  "feminine": [
+    "a soft feminine outfit with a ribbon blouse and flowy skirt in pastel tones, feminine style",
+    "a ruffled pastel dress with a satin ribbon at the waist, feminine style",
+    "a pastel pink ruffled blouse with a ribbon tie, feminine style",
+    "a sweet outfit with ribbon bows and tiered ruffles in pastel colors, feminine style",
+    "a lovely pleated skirt with a puff-sleeve blouse and mary jane shoes, lovely style",
+    "a balletcore outfit with a wrap top, tulle skirt and ballet flats, balletcore style",
+    "a romantic lace dress in soft cream, romantic feminine style",
+    "a coquette outfit with lace and small ribbon details, coquette style"
+  ],
+  "street": [
+    "an oversized graphic hoodie with baggy cargo pants and a baseball cap, street style",
+    "an oversized sweatshirt with a big logo print, wide cargo pants and a snapback cap, street style",
+    "a loose graphic print hoodie with cargo pants and a backwards cap, street style",
+    "an oversized logo hoodie with baggy cargo pants and a cap, urban street style",
+    "a cropped top with baggy cargo pants and chunky sneakers, girlish street style",
+    "a hip hop outfit with an oversized jersey and wide pants, hip hop style",
+    "a sporty track jacket with jogger pants and chunky sneakers, sporty street style",
+    "a skater outfit with a loose t-shirt, wide pants and a beanie, skater style"
+  ],
+  "y2k_vintage": [
+    "a cropped baby tee with low-rise flared jeans and a mini shoulder bag, y2k style",
+    "a retro outfit with a vintage printed shirt and faded washed denim, retro vintage style",
+    "a kitschy colorful outfit with butterfly prints and rhinestones, y2k style",
+    "a grunge outfit with ripped denim and an oversized plaid flannel shirt, 90s vintage style",
+    "a colorful kitschy outfit with cartoon character prints and neon colors, y2k style",
+    "a retro outfit with bold vintage patterns and bright retro colors, 70s retro style",
+    "a punk rock outfit with a studded black leather jacket and chains, punk style",
+    "a vintage-inspired outfit with a retro printed blouse and high-waisted jeans, retro style",
+    "a colorful mismatched outfit with bold clashing patterns, kitsch style",
+    "a black punk outfit with a leather jacket and a plaid skirt, punk style"
+  ],
+  "office_classic": [
+    "a tailored blazer with a silk blouse and straight trousers, classic office style",
+    "a tweed jacket with a pleated skirt and pumps, elegant classic style",
+    "a beige trench coat over a neat shirt and slacks, classic style",
+    "a matching suit set with a crisp white shirt, polished office look",
+    "a sharply tailored blazer with matching suit trousers, office wear",
+    "a tweed jacket with gold buttons and a matching skirt, classic tweed look",
+    "a structured trench coat belted at the waist, classic trench coat style",
+    "a crisp white blouse with a black pencil skirt and pumps, office wear",
+    "a preppy outfit with a knit vest over a collared shirt and a pleated skirt, preppy style",
+    "a french chic outfit with a striped shirt, straight trousers and loafers, french chic style"
+  ],
+  "bohemian": [
+    "a flowy floral maxi skirt with a loose peasant blouse and fringe details, bohemian style",
+    "a boho outfit with a crochet top, layered necklaces and suede boots, boho chic style",
+    "a western outfit with a fringe suede jacket, a leopard print scarf and cowboy boots, western boho style",
+    "a loose embroidered tunic dress in earthy tones with a wide studded belt, bohemian style",
+    "a flowy paisley maxi dress in earthy tones, bohemian hippie style",
+    "a fringe suede jacket with denim and cowboy boots, western style",
+    "a crochet top with a patchwork maxi skirt, boho style",
+    "a loose embroidered tunic with wide flared pants in earthy colors, hippie style",
+    "a breezy printed resort dress for a vacation, boho chic style",
+    "a festival outfit with a fringe vest, denim shorts and boots, festival boho style"
+  ]
+}
