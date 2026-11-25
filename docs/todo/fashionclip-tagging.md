@@ -28,6 +28,7 @@
 ## 진행 메모
 
 - 2026-11-24: `app/pipeline/tagging.py`, `tests/test_tagging.py` 작성. 카테고리 소분류는 TBD 상태로 configs 초안을 그대로 사용.
+- 2026-11-26: 태깅 v1 — 스타일별 독립 점수(style_id), 숨은 속성, 직접 등록 카테고리 (#117, `261126-0300-01-tagging-v1.md`). 기준값은 초안
 - 2026-11-25: 모델 로드 404(open_clip → transformers)와 점수 스케일 누락 수정, yaml utf-8 (PR #88, `261125-0943-01-tagging-model-load-fix.md`).
 
 ## 열린 질문

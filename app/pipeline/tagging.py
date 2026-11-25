@@ -156,7 +156,10 @@ def _style_scores(sc: _Scorer, styles_cfg: dict) -> list[dict]:
     return [
         {
             "style_id": s["style_id"],
-            "score": _sigmoid(ind["temperature"] * (float(sc.logits(s["prompts"]).mean()) - neutral)),
+            "score": _sigmoid(
+                ind["temperature"] * (float(sc.logits(s["prompts"]).mean()) - neutral)
+                + ind.get("offset", 0.0)
+            ),
         }
         for s in styles_cfg["styles"]
     ]

@@ -3,13 +3,16 @@
 # 문장은 옷 한 벌(누끼) 사진용이다. 실험용 전체 설정(코디 문장, K-Fashion 연결)은 configs/aesthetics_7.yaml(#111).
 #
 # 점수: 스타일마다 따로 0~1 (합 1 아님).
-#   score = sigmoid(temperature × (스타일 문장 평균 logit − 기준 문장 평균 logit))
+#   score = sigmoid(temperature × (스타일 문장 평균 logit − 기준 문장 평균 logit) + offset)
 #   logit은 CLIP logit_scale(약 100) × 코사인 유사도다.
 #   기준 문장은 "평범한 옷"이다. 스타일 느낌이 기준보다 강할수록 1에 가까워진다.
-#   temperature는 [숫자] 초안이다. K-Fashion·레퍼런스 사진으로 분포를 보고 정한다.
+#   temperature·offset은 [숫자] 초안이다. 2026-11-26 K-Fashion 사진 28장(7개 스타일 × 4장, 사진 전체를 한 벌로 봄)에서
+#   offset 0일 때 점수 평균 0.04, 사진별 1위 점수 중앙값 약 0.11로 너무 낮아, 1위 중앙값이 0.5 근처가 되게 offset을 2.3으로 뒀다.
+#   옷 한 벌(누끼) 사진으로 분포를 다시 보고 정한다.
 
 independent_score:
   temperature: 0.5
+  offset: 2.3
   neutral_prompts:
     - "a plain basic clothing item"
     - "an ordinary everyday piece of clothing with no particular style"
