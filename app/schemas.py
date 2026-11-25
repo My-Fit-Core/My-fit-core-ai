@@ -75,6 +75,7 @@ class WeatherInput(BaseModel):
 class WardrobeItemInput(BaseModel):
     item_id: str
     category: str = Field(description="top / bottom / dress / outerwear / shoes / bag")
+    subcategory: str | None = None
     aesthetic_scores: dict[str, float] = {}
     embedding: list[float] | None = None
 

@@ -28,6 +28,8 @@
 
 ## 진행 메모
 
+- 2026-11-26: `main.py`가 `engine.py`(binary 날씨 로직)를 쓰고 있던 것을 발견. `scoring.py`(warmth + temp_bands + 추구미 가중치 완성 구현)로 교체. `WardrobeItemInput`에 `subcategory` 필드 추가. PR #HandoA01/106-weather-scoring.
+
 ## 열린 질문
 
 - [ ] 가중치 초깃값: 규칙 기반으로 먼저 세팅, 피드백 루프(#105) 연동 시 학습 가능하도록 설계할지
