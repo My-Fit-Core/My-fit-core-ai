@@ -1,0 +1,68 @@
+# [실험, 서비스에 쓰지 않음] 옷 한 벌용 추구미 7종 문장 자동 고르기 결과 (#99). 서비스 설정은 configs/styles.yaml
+# 문장·offset은 scripts/tune_item_style_prompts.py로 고름: 다듬기용 seed42(K-Fashion 옷 638벌), 확인용 seed7_ex42.
+# offset 2.28 = 다듬기용에서 옷별 1위 점수의 중앙값이 0.5가 되는 값. 수치는 outputs/item_attributes/tune_item_result.json
+# 결과와 해석은 docs/reports/261126-0930-01-item-attribute-eval.md
+
+independent_score:
+  temperature: 0.5
+  offset: 2.28
+  neutral_prompts:
+  - a plain basic clothing item
+  - an ordinary everyday piece of clothing with no particular style
+styles:
+- style_id: 1
+  key: minimal
+  name: 미니멀
+  prompts:
+  - a plain black turtleneck knit, modern minimalist style
+  - a crisp white shirt with a sharp clean collar, minimalist style
+  - a sleek all-black top with clean modern lines, minimalist style
+  - an oversized long black coat with no details, modern minimalist style
+- style_id: 2
+  key: casual
+  name: 캐주얼
+  prompts:
+  - a plain white t-shirt in a regular fit, casual style
+  - basic straight-leg blue jeans, casual style
+  - a striped long-sleeve t-shirt, simple casual style
+  - a denim jacket, everyday campus casual style
+- style_id: 3
+  key: feminine
+  name: 러블리/페미닌
+  prompts:
+  - a flowy floral midi skirt in soft pink, feminine style
+  - a lace-trimmed dress with puff sleeves, feminine style
+  - a cropped cardigan with pearl buttons in pastel colors, feminine style
+  - a top with small ribbon details and lace, coquette style
+- style_id: 4
+  key: street
+  name: 걸리시 스트릿
+  prompts:
+  - an oversized graphic hoodie, street style
+  - baggy cargo pants with large side pockets, street style
+  - an oversized varsity bomber jacket with patches, street style
+  - wide skater pants, skater style
+- style_id: 5
+  key: y2k_vintage
+  name: Y2K/빈티지
+  prompts:
+  - a cropped baby tee with a cute retro print, y2k style
+  - a retro printed blouse with a bold vintage pattern, 70s retro style
+  - a colorful top with playful cartoon prints, kitsch style
+  - a black leather jacket with studs, punk style
+- style_id: 6
+  key: office_classic
+  name: 오피스/클래식
+  prompts:
+  - a tweed jacket with gold buttons, classic style
+  - a beige double-breasted trench coat, classic style
+  - a matching suit jacket, polished office look
+  - a knit vest over a collared shirt, preppy style
+- style_id: 7
+  key: bohemian
+  name: 보헤미안
+  prompts:
+  - a loose embroidered peasant blouse, bohemian style
+  - a crochet knit top in earthy tones, boho style
+  - a patchwork maxi skirt, boho style
+  - wide flared pants in earthy colors, hippie style

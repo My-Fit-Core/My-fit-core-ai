@@ -1,0 +1,73 @@
+{
+  "_note": "옷 한 벌(누끼) 사진용 추구미 7종 문장 후보 (#99, 실험용). 제안서의 스타일 정의 안에서만 썼다. 코디 사진용은 style_prompt_pool.json",
+  "minimal": [
+    "tailored black wide-leg trousers with a clean crease, minimalist style",
+    "a structured single-color blazer with clean lines, minimalist style",
+    "a sleek monochrome long coat in beige, minimalist style",
+    "a simple sleeveless slip dress in black, minimalist style",
+    "a plain black turtleneck knit, modern minimalist style",
+    "a crisp white shirt with a sharp clean collar, minimalist style",
+    "a sleek all-black top with clean modern lines, minimalist style",
+    "an oversized long black coat with no details, modern minimalist style"
+  ],
+  "casual": [
+    "a plain white t-shirt in a regular fit, casual style",
+    "a solid gray knit sweater, simple everyday casual style",
+    "basic straight-leg blue jeans, casual style",
+    "a solid-color button-up shirt in a regular fit, casual style",
+    "a basic gray sweatshirt, everyday casual style",
+    "a plain hooded zip-up, simple daily casual style",
+    "a striped long-sleeve t-shirt, simple casual style",
+    "a denim jacket, everyday campus casual style"
+  ],
+  "feminine": [
+    "a pastel ruffled blouse with a ribbon tie, feminine style",
+    "a flowy floral midi skirt in soft pink, feminine style",
+    "a lace-trimmed dress with puff sleeves, feminine style",
+    "a cropped cardigan with pearl buttons in pastel colors, feminine style",
+    "a pleated tennis skirt in pastel color, lovely style",
+    "a wrap top with a tulle skirt, balletcore style",
+    "a romantic lace blouse in soft cream, romantic feminine style",
+    "a top with small ribbon details and lace, coquette style"
+  ],
+  "street": [
+    "an oversized graphic hoodie, street style",
+    "baggy cargo pants with large side pockets, street style",
+    "an oversized sweatshirt with a big logo print, street style",
+    "an oversized varsity bomber jacket with patches, street style",
+    "a cropped t-shirt with a bold logo, girlish street style",
+    "an oversized sports jersey, hip hop style",
+    "a sporty track jacket with stripes, sporty street style",
+    "wide skater pants, skater style"
+  ],
+  "y2k_vintage": [
+    "a cropped baby tee with a cute retro print, y2k style",
+    "low-rise flared jeans in a faded wash, y2k style",
+    "a vintage shirt with a retro pattern, retro style",
+    "a faded oversized plaid flannel shirt, grunge style",
+    "a retro printed blouse with a bold vintage pattern, 70s retro style",
+    "a colorful top with playful cartoon prints, kitsch style",
+    "a black leather jacket with studs, punk style",
+    "a plaid mini skirt with chains, punk style"
+  ],
+  "office_classic": [
+    "a tailored navy blazer, classic office style",
+    "a tweed jacket with gold buttons, classic style",
+    "a beige double-breasted trench coat, classic style",
+    "a crisp white silk blouse, elegant office style",
+    "a black pencil skirt, office wear",
+    "a matching suit jacket, polished office look",
+    "a knit vest over a collared shirt, preppy style",
+    "pressed straight slacks with a center crease, office wear"
+  ],
+  "bohemian": [
+    "a flowy floral maxi skirt, bohemian style",
+    "a fringe suede jacket in camel, western boho style",
+    "a loose embroidered peasant blouse, bohemian style",
+    "a crochet knit top in earthy tones, boho style",
+    "a flowy paisley maxi dress in earthy tones, bohemian hippie style",
+    "a patchwork maxi skirt, boho style",
+    "wide flared pants in earthy colors, hippie style",
+    "a breezy printed resort dress, boho chic style"
+  ]
+}
