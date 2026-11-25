@@ -106,9 +106,9 @@ tagging:
       fringe: ["a clothing item with fringe", "a clothing item without fringe"]
       fur_trim: ["a clothing item with a fur trim", "a clothing item without fur trim"]
   subcategory:
-    # AI가 고르지 않는 소분류. 이너(#115)는 사진만으로 일반 티셔츠와 구분되지 않아(레퍼런스 사진 9장 모두 이너 1위),
-    # AI가 고르면 몸에 붙는 티셔츠가 전부 이너가 되어 추천의 상의 뼈대에서 빠진다. 이너는 사용자가 등록할 때 고른다. [결정: 사용자]
-    ai_skip: [inner_tshirt, sleeveless_inner]
+    # AI가 고르지 않을 소분류(비워 둠). 11/26에 이너 2개를 넣었다가 되돌렸다(#126): 이너는 팀원 기능(#115)이라 팀원이 정한다.
+    # 참고: 레퍼런스 사진 9장에서 몸에 붙는 티셔츠가 모두 inner_tshirt 1위였다(추천에서 상의 뼈대로 안 쓰임)
+    ai_skip: []
     # 소분류 판정 문장. 이름만 쓰면("a photo of a shirt") 깃 없는 티셔츠를 셔츠로, 와이드 팬츠를 반바지로 보는 일이 있어
     # 생김새(깃·단추·기장·소재)를 적는다. 여러 문장이면 평균. 없는 소분류는 "a photo of a <이름>"을 쓴다. [초안]
     prompts:
