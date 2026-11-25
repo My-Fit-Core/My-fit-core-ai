@@ -37,6 +37,14 @@ DETECTOR_CLASSES: dict[str, dict] = yaml.safe_load(
 DETECTOR_VERSION = "deepfashion2-yolov8s-seg"
 TAGGER_VERSION = "fashion-clip-vitb32"  # app.pipeline.tagging.MODEL_VERSION과 같아야 한다(테스트가 확인)
 
+# 같은 옷을 두 번 검출한 것으로 보는 기준: 마스크가 작은 쪽의 이 비율 이상 겹치면(같은 대분류) 하나만 남긴다
+DUPLICATE_OVERLAP = 0.6
+# 아래가 잘린 하의·원피스: 마스크가 사진 맨 아래 이 비율(높이 기준) 안에 닿으면 잘린 것으로 보고 뺀다.
+# 입은 사진에서 하의가 프레임 밖으로 나가면 기장·핏을 알 수 없어서다(사용자 의견: 종아리까지 보여야 함).
+# ponytail: 프레임 끝에 닿는지로만 본다. 종아리 위치를 직접 보려면 자세 추정 모델이 필요하다
+BOTTOM_EDGE_RATIO = 0.01
+TRUNCATION_CHECKED = {"bottom", "dress"}
+
 Fetch = Callable[[str], bytes]
 Upload = Callable[[str, bytes], None]
 
@@ -98,19 +106,45 @@ def find_regions(image: Image.Image, req: AnalyzeRequest, detect) -> list[Region
         mask=np.ones((image.height, image.width), dtype=bool),
         category=req.category,
     )
-    # 직접 등록은 대분류로 고르기 전에 자르면 안 되므로 상한까지 받는다
-    detections = detect(image, max_items=MAX_ITEMS if req.category else len(req.items))
+    # 중복·잘린 옷을 거른 뒤에 업로드 대상 개수로 자르므로 상한까지 받는다(신뢰도 높은 순)
+    detections = detect(image, max_items=MAX_ITEMS)
     regions = []
     for d in detections:
         cls = DETECTOR_CLASSES.get(d.df2_class, {})
         regions.append(Region(d.bbox, d.mask, cls.get("category"), cls.get("sleeve")))
+    regions = drop_duplicates(regions)
 
     if req.category:
         same = [r for r in regions if r.category == req.category]
         return [same[0] if same else full]
+    regions = [r for r in regions if not is_cut_at_bottom(r, image.height)]
     if not regions:
         raise JobError(ErrorCode.NO_GARMENT_DETECTED, "옷을 찾지 못했습니다")
-    return regions
+    return regions[: len(req.items)]
+
+
+def drop_duplicates(regions: list[Region]) -> list[Region]:
+    """같은 옷을 두 번 잡은 검출을 뺀다. 앞(신뢰도 높은 것)을 남긴다."""
+    kept: list[Region] = []
+    for r in regions:
+        area = r.mask.sum()
+        dup = any(
+            k.category == r.category
+            and area > 0
+            and (k.mask & r.mask).sum() / min(area, k.mask.sum() or 1) >= DUPLICATE_OVERLAP
+            for k in kept
+        )
+        if not dup:
+            kept.append(r)
+    return kept
+
+
+def is_cut_at_bottom(region: Region, height: int) -> bool:
+    """하의·원피스의 마스크가 사진 맨 아래에 닿으면(프레임 밖으로 이어지면) True."""
+    if region.category not in TRUNCATION_CHECKED:
+        return False
+    rows = max(1, round(height * BOTTOM_EDGE_RATIO))
+    return bool(region.mask[-rows:].any())
 
 
 def _analyze_item(image, region: Region, target: UploadTarget, upload: Upload, tag, colors):

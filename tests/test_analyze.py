@@ -38,10 +38,10 @@ def _req(n=2, category=None) -> AnalyzeRequest:
     )
 
 
-def _det(x1, cls="short_sleeved_shirt", conf=0.9):
+def _det(x1, cls="short_sleeved_shirt", conf=0.9, y2=90):
     mask = np.zeros((H, W), dtype=bool)
-    mask[10:90, x1 : x1 + 50] = True
-    return SimpleNamespace(bbox=(x1, 10.0, x1 + 50.0, 90.0), conf=conf, df2_class=cls, mask=mask)
+    mask[10:y2, x1 : x1 + 50] = True
+    return SimpleNamespace(bbox=(x1, 10.0, x1 + 50.0, float(y2)), conf=conf, df2_class=cls, mask=mask)
 
 
 def _tag(image, bbox, mask, category=None):
@@ -110,7 +110,26 @@ def test_succeeded_two_items():
 def test_detections_capped_by_upload_targets():
     fake = Fake([_det(0), _det(50), _det(100)])
     res = _run(_req(2), fake)
-    assert fake.max_items == 2 and len(res.items) == 2
+    assert len(res.items) == 2 and [i.bbox[0] for i in res.items] == [0.0, 0.25]
+
+
+def test_duplicate_detection_dropped():
+    """같은 하의를 두 번 잡으면(마스크가 거의 겹침) 신뢰도 높은 하나만 남긴다."""
+    fake = Fake([_det(0), _det(100, "trousers", 0.8), _det(105, "skirt", 0.5)])
+    res = _run(_req(3), fake)
+    assert [i.category for i in res.items] == ["top", "bottom"]
+
+
+def test_bottom_cut_at_frame_edge_dropped():
+    """아래가 사진 밖으로 잘린 하의는 빼고 상의만 본다."""
+    fake = Fake([_det(0), _det(100, "trousers", 0.8, y2=H)])
+    res = _run(_req(2), fake)
+    assert [i.category for i in res.items] == ["top"]
+
+
+def test_only_cut_bottom_means_no_garment():
+    res = _run(_req(1), Fake([_det(100, "trousers", 0.8, y2=H)]))
+    assert res.errors[0].code == "NO_GARMENT_DETECTED"
 
 
 def test_partial_failed_on_upload_error():
