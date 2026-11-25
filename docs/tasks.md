@@ -52,7 +52,7 @@
 
 - [x] T24: `02-specs.md`를 10/12 회의 결정에 맞게 갱신 — 입력 규격(JPEG/PNG/WebP, 20MB), 추천 위치·동기, 결과 전달(콜백)·상태값·에러 코드, 누끼 업로드 방식, 날씨 입력값, 카테고리 필드 분리 (요구사항: 문서, 선행: 없음, T6보다 먼저) — PR #57, `261123-1624-01-specs-1012-decisions.md`
   - 완료 기준: `TBD`가 풀린 항목만 고치고 근거(회의 안건 번호)를 적음. 아직 `[미정]`인 것(인증, 임베딩 방식, dress, 소분류)은 `TBD`로 유지. 어긋남은 Report에 보고.
-- [ ] T6: `app/schemas.py` v1 — `category`/`subcategory` 분리, `client_item_key`, 누끼 업로드 URL 요청 필드와 업로드된 경로 응답 필드, 결과 상태(`succeeded`/`partial_failed`/`failed`), `items`+`errors[{code,message,client_item_key}]`, bbox 정규화 float (요구사항: F-201~203, F-302, 선행: T24, T2(소분류·dress), T3(client_item_key·임베딩 방식))
+- [x] T6: `app/schemas.py` v1 — `category`/`subcategory` 분리, `client_item_key`, 누끼 업로드 URL 요청 필드와 업로드된 경로 응답 필드, 결과 상태(`succeeded`/`partial_failed`/`failed`), `items`+`errors[{code,message,client_item_key}]`, bbox 정규화 float (요구사항: F-201~203, F-302, 선행: T24, T2(소분류·dress), T3(client_item_key·임베딩 방식)) — PR #116 (머지 대기: `[결정: 사용자]`), `261126-0230-01-api-schema-v1.md`
   - 완료 기준: `API_VERSION` 상승, 목업 응답 JSON 예시를 `docs/`에 추가, Report 작성, 기존 `/health` 테스트 통과.
   - 하지 말 것: 인증·임베딩 전달처럼 T3에서 안 풀린 필드를 임의로 확정(`TBD` 주석으로 남김).
 - [x] T7: 입력 이미지 검증 모듈 `app/pipeline/` — 형식(JPEG/PNG/WebP), 용량(최대 20MB), EXIF 회전 보정·제거, 짧은 변 <512px 경고 (요구사항: F-201)

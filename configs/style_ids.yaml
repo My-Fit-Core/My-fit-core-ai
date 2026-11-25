@@ -1,0 +1,11 @@
+# style_id ↔ 내부 추구미 키 (API v1, issue #114). 백엔드 style 테이블의 메인 스타일 id와 같아야 한다.
+# [초안] 추구미 7종 제안 기준. 7종 합의 후 확정한다.
+# 추천(recommend/scoring.py, configs/recommend.yaml)은 내부 키로 동작하므로 API 경계(app/main.py)에서 바꾼다.
+styles:
+  1: minimal
+  2: casual
+  3: feminine
+  4: street
+  5: y2k_vintage
+  6: office_classic
+  7: bohemian

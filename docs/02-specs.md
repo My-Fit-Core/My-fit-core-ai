@@ -16,8 +16,8 @@
 - AI 서버는 GPU가 필요한 추론과 추천 계산을 담당한다. 인증(JWT), 날씨 수집·캐시, DB 저장은 백엔드 책임.
 - 서빙 플랫폼: `TBD` (후보: Modal, RunPod Serverless, 직접 GPU 서버). FastAPI + Docker 이미지 하나로 어디든 옮길 수 있게 유지한다.
 - 결과 전달 방식: 분석은 비동기로 처리하고 결과를 백엔드에 **콜백**으로 보낸다 `[확인]`(10/12 회의 안건 4). 추천은 동기 응답(안건 2, 4).
-- 콜백 URL 전달 방식과 콜백 인증: `TBD`
-- 백엔드 → AI 서버 인증 방식: `TBD`
+- 콜백: 분석 요청마다 `callback_url`을 받는다. AI 서버 → 백엔드 콜백은 HMAC 서명을 붙이고, 키는 환경변수 `AI_CALLBACK_HMAC_SECRET`이다(11/25 백엔드 답변). 서명 대상·헤더 이름·시간 허용 범위는 `TBD`(제안: `X-AI-Timestamp` + `X-AI-Signature: sha256=<hex>`, 서명 대상 `timestamp + "." + 본문`, 5분).
+- 백엔드 → AI 서버 인증: 공유 비밀키 헤더(11/25 백엔드 동의). 헤더 이름은 `TBD`(제안: `X-AI-Server-Secret`).
 
 ## 2. 기술 스택
 
@@ -30,55 +30,31 @@
 | 태깅·임베딩 | FashionCLIP (zero-shot) | 입력은 마스크 밖을 흰색으로 지우고 박스로 자른 사진(`261108-0315-01-category-poc.md`). 색상은 마스크 픽셀 k-means |
 | 추천 | 규칙 기반 점수 함수 (`recommend/`) | GPU 불필요. AI 서버에서 실행, 동기 응답(10/12 회의 안건 2, 4) |
 | LLM 코멘트 (P1) | 경량 LLM API | 모델 `TBD` |
-| 벡터 저장 | Supabase pgvector (백엔드 DB) | 임베딩 차원은 모델 확정 후 기록. 임베딩을 분석 응답·추천 요청에 담는 방식 `TBD` |
+| 벡터 저장 | Supabase pgvector (백엔드 DB) | 분석 결과에 옷별 임베딩과 `embedding_model`을 담고, 백엔드가 등록한 옷과 연결해 저장한다(11/25 백엔드 답변). FashionCLIP ViT-B/32, 512차원, L2 정규화, 코사인 유사도(= 내적). 백엔드 확인 대기 |
 
 - 패키지 버전: `requirements.txt`는 현재 버전으로 고정한다(10/12 회의 안건 10).
 
 ## 3. API 계약 (백엔드 ↔ AI 서버)
 
-현재 버전: **v0 (초안)**. 실제 정의는 `app/schemas.py`가 기준이며, 이 섹션과 다르면 어긋남을 보고한다.
-10/12 회의에서 합의된 v1 내용은 아래 "v1 합의 사항"에 따로 적었다. 스키마와 예시 JSON 반영은 T6에서 버전을 올리며 한다.
+현재 버전: **v1 (초안, issue #114)**. 실제 정의는 `app/schemas.py`가 기준이고, 예시는 `docs/api-v1-examples.json`이다(테스트가 둘이 맞는지 확인). 이 섹션과 다르면 어긋남을 보고한다.
 
-### POST `/v0/analyze` — 다중 의류 분석 요청 (현재 구현 v0)
-
-요청
-```json
-{
-  "job_id": "uuid",
-  "image_url": "원본 이미지 signed URL",
-  "callback_url": "선택, TBD",
-  "max_items": 6
-}
-```
-
-응답(결과)
-```json
-{
-  "job_id": "uuid",
-  "status": "done | failed",
-  "model_version": "v0.1",
-  "items": [
-    {
-      "bbox": [0, 0, 100, 100],
-      "mask_path": "누끼 PNG 저장 경로",
-      "category": "top.knit",
-      "category_conf": 0.93,
-      "colors": [{"hex": "#2B2B2B", "ratio": 0.71}],
-      "pattern": "solid",
-      "aesthetic_scores": {"feminine": 0.08, "street": 0.12, "minimal": 0.46, "vintage_layered": 0.12, "casual": 0.22},
-      "embedding": [0.0]
-    }
-  ],
-  "error": null
-}
-```
+v1 요약
+- `POST /v1/analyze`: 요청 `{job_id, image_url, callback_url, items[{client_item_key, upload_url, path?}], category?}` → 즉시 `{job_id, job_status}`. 결과(`AnalyzeResult`)는 `callback_url`로 보낸다.
+  - `items`는 누끼 업로드 대상 1~6개. 검출된 옷을 신뢰도 높은 순으로 앞에서부터 배정한다.
+  - `category`가 있으면(신발·가방 직접 등록) 검출 없이 사진 전체를 한 벌로 본다.
+- 결과 옷마다: `client_item_key`, `cutout_path`, `bbox`(0~1), `category`, `subcategory`, `category_candidates`(상위 3), `colors`, `pattern`, `style_scores[{style_id, score}]`, 숨은 속성(`fit`, `off_shoulder`, `sleeve`, `material`, `details`), `embedding`.
+  - `style_scores`는 스타일마다 따로 매긴 0~1 점수이며 합이 1이 아니다. `style_id`는 백엔드 style 테이블의 메인 스타일 id다.
+  - 숨은 속성은 화면에 표시하지 않고 추천에만 쓴다. 불확실하면 `null`, `details`의 빈 목록은 "확인된 것 없음"이다. 값 목록은 `configs/attributes.yaml`.
+- 결과 상태 `result_status`: `succeeded` / `partial_failed` / `failed`(아래 v1 합의 사항).
+- `POST /v1/recommend`, `/v1/recommend/swap`: `{weather, main_style_id, sub_style_ids, wardrobe[...]}`. 옷장 아이템에는 분석 결과(소분류·스타일 점수·숨은 속성)와 사용자가 고른 `warmth`(선택)를 담는다.
+- 값 목록(카테고리·패턴·소재·디테일)은 문자열로 주고받는다. enum으로 받을지는 백엔드 확인 대기.
 
 ### v1 합의 사항 (10/12 회의, 스키마 반영은 T6)
 
 분석 요청·결과
 - 카테고리는 대분류 `category`와 소분류 `subcategory` 두 필드로 나눈다. 점 표기(`top.knit`)는 쓰지 않는다(안건 7). 값 목록은 §4.
-- 누끼 업로드: 백엔드가 원본 사진 URL과 누끼 업로드 URL을 발급해 요청에 담는다. AI 서버는 받은 URL로 누끼 PNG를 올리고, 결과에는 올린 파일 경로를 넣는다. 누끼 업로드 URL 개수가 사진 1장의 옷 수 상한이다(안건 8). 요청·응답 필드 이름은 `TBD`(T6).
-- 옷마다 `client_item_key`를 둔다. 부여 방식과 누끼 업로드 URL 매핑은 `TBD`(T3).
+- 누끼 업로드: 백엔드가 원본 사진 URL과 누끼 업로드 URL을 발급해 요청에 담는다. AI 서버는 받은 URL로 누끼 PNG를 올리고, 결과에는 올린 파일 경로를 넣는다. 누끼 업로드 URL 개수가 사진 1장의 옷 수 상한이다(안건 8). 필드 이름은 v1 스키마(`items[].upload_url`, 결과 `cutout_path`)로 정했다(백엔드 확인 대기).
+- 옷마다 `client_item_key`를 둔다. v1은 요청 `items[]`에 업로드 URL과 묶어 받는 것으로 가정했다. 부여 방식은 백엔드 확인 대기(T3).
 - 결과 상태(안건 7)
   - `succeeded`: items ≥1, errors 0
   - `partial_failed`: items ≥1, errors ≥1. 실패한 옷은 errors에 `client_item_key`와 함께 넣는다
@@ -101,7 +77,7 @@
   | `NO_GARMENT_DETECTED` | 무의미 | 검출 0벌 |
   | `ANALYSIS_FAILED` | 무의미 | 분석 실패. 이미지 규격 위반도 우선 여기로 보낸다 `[확인]`. 전용 코드 필요 여부는 `TBD` |
 
-- 임베딩을 분석 결과에 담을지: `TBD`
+- 임베딩은 분석 결과에 옷마다 담는다(11/25 백엔드 답변, §2).
 
 ### 입력 이미지 규칙
 
@@ -113,31 +89,32 @@
 ### 좌표 규칙
 
 - `bbox`는 회전 보정된 이미지 기준 정규화 좌표(0~1)이며 `[x_min, y_min, x_max, y_max]` 순서다. 왼쪽 위가 (0, 0)이다(안건 9).
-- 위 v0 예시와 `app/schemas.py`의 `bbox`(`list[int]`)는 아직 이 규칙을 반영하지 않았다. 스키마 버전을 올릴 때 함께 바꾼다.
+- v1 스키마(`app/schemas.py`)는 이 규칙대로 `bbox`를 0~1 float로 둔다.
 
 ### 추천 API (10/12 회의 안건 2, 3, 4)
 
 추천(F-302)은 백엔드 7시 배치에서 AI 서버 API를 호출해 실행한다.
-- `POST /v0/recommend`: 코디 세트 3종. `POST /v0/recommend/swap`: 슬롯 1개 대체 후보 랭킹(F-304). 경로 이름은 초안.
+- `POST /v1/recommend`: 코디 세트 3종. `POST /v1/recommend/swap`: 슬롯 1개 대체 후보 랭킹(F-304).
 - 동기 응답이며 `job_id`가 없다.
 - 백엔드가 날씨 + 추구미 + 옷장 목록을 한 요청에 담아 보낸다. AI 서버는 날씨를 조회하지 않고 DB에도 접근하지 않는다.
-- 요청·응답 필드는 T6에서 스키마로 정한다. 옷장 아이템에 임베딩을 담을지는 `TBD`.
+- 요청·응답 필드는 v1 스키마(§3 v1 요약)를 따른다. 옷장 아이템의 임베딩은 선택 필드다.
 
 ## 4. 데이터 기준 (configs/aesthetics.yaml, configs/categories.yaml)
 
-- 사용자에게 보이는 추구미: 기본 스타일 5개 (페미닌, 스트리트, 미니멀, 빈티지 레이어드, 캐주얼). 2026-11-09 기획 합의로 Y2K를 스트리트로 바꿨다(issue #44).
+- 사용자에게 보이는 추구미: 7종 확대 제안 중(미니멀·캐주얼·러블리/페미닌·걸리시 스트릿·Y2K/빈티지·오피스/클래식·보헤미안, `configs/style_ids.yaml`). 합의 전 현재 구현은 기본 스타일 5개 (페미닌, 스트리트, 미니멀, 빈티지 레이어드, 캐주얼). 2026-11-09 기획 합의로 Y2K를 스트리트로 바꿨다(issue #44).
   - 캐주얼은 테마 없는 기본템(무지, 기본핏), 스트리트는 오버핏·그래픽·로고·카고·캡이다.
   - 우리 스트리트 ≠ K-Fashion 스트리트. K-Fashion 스트리트는 일상복에 가까워 캐주얼에 연결하고, 우리 스트리트는 K-Fashion 힙합·스포티에 연결한다(잠정, `261109-1840-01-base-styles.md`).
   - Y2K 같은 마이크로 트렌드는 2차 로드맵으로 미룬다. K-Fashion에 대응 스타일이 없어 이미지를 직접 모아야 한다.
 - 추구미 점수
   - 코디 사진: FashionCLIP 프롬프트 세트 `outfit`의 점수를 `calibration.prior`(고정값)로 나눠 다시 합 1로 보정한다. 근거는 `docs/reports/261108-0230-01-aesthetic-display.md`.
-  - 옷 한 벌(API `aesthetic_scores`): 프롬프트 세트 `item`을 쓰고 보정하지 않는다. `calibration_item.prior`는 기록만 한다. 근거는 `docs/reports/261110-0117-01-item-prompts.md`.
+  - v1부터 API 점수는 `style_scores`(스타일마다 따로 0~1, 합 1 아님)로 바뀐다(11/25 결정, 계산 방식은 태깅 수정에서). 아래는 v0 방식 기록이다.
+  - 옷 한 벌(v0 `aesthetic_scores`): 프롬프트 세트 `item`을 쓰고 보정하지 않는다. `calibration_item.prior`는 기록만 한다. 근거는 `docs/reports/261110-0117-01-item-prompts.md`.
   - 옷 종류 쏠림(예: 청바지 → 캐주얼, 후드티 → 스트리트)은 MVP에서 그대로 둔다.
 - 카테고리 체계: 대분류 `category`와 소분류 `subcategory` 두 필드(10/12 회의 안건 7). 백엔드 ERD enum과 반드시 동일하게 유지. 목록은 `configs/categories.yaml`에 둔다(현재 `category-taxonomy.md` 안 A 초안, 확정 아님).
   - 대분류 6종(백엔드 제안, 안건 7): `outerwear`, `top`, `bottom`, `shoes`, `bag`, `accessory`
-  - 원피스(`dress`) 대분류 추가 여부: `TBD`
-  - 소분류 목록: `TBD` (AI가 정해서 백엔드에 전달)
-  - MVP에서 신발·가방·액세서리를 검출할지: `TBD` (현재 검출기 DeepFashion2 YOLO에는 해당 클래스가 없다)
+  - 원피스(`dress`)를 대분류에 추가해 7종(11/25 안건 2-1 결정).
+  - 소분류 목록: 안건 초안 그대로 확정(11/25 안건 2-2), `configs/categories.yaml`. 이후 #115에서 이너 소분류가 추가돼 백엔드·프론트 공유 필요.
+  - MVP 자동 검출은 의류(`top`, `bottom`, `outerwear`, `dress`)만(11/25 안건 2-4 A). 신발·가방·액세서리는 사용자가 카테고리를 골라 등록한다.
 - 주 타겟이 1020대 여성이므로 원피스, 스커트 세부, 가방·액세서리를 세분화한다.
 
 ## 5. 성능 기준

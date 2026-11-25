@@ -1,9 +1,12 @@
 """AI 서버 엔트리포인트.
 
-지금은 백엔드가 계약대로 연동을 시작할 수 있도록 목업 응답을 돌려준다.
-실제 파이프라인은 app/pipeline/ 에 구현 후 연결한다.
+분석(/v1/analyze)은 아직 접수 응답만 돌려준다(실제 파이프라인은 #101).
+추천은 recommend/scoring.py를 쓴다.
 """
 
+from pathlib import Path
+
+import yaml
 from fastapi import FastAPI, HTTPException
 
 # ML 패키지(cv2, torch 등)가 없는 환경(기본 requirements.txt)에서도 서버가 뜨도록 lazy import
@@ -17,17 +20,16 @@ except ImportError:
 
 from app.schemas import (
     API_VERSION,
+    AnalyzeAccepted,
     AnalyzeRequest,
-    AnalyzeResult,
-    ColorInfo,
-    DetectedItem,
     OutfitSetOutput,
     RecommendRequest,
     RecommendResult,
     SwapRequest,
     SwapResult,
 )
-from recommend.scoring import Item, Weather as ScoringWeather
+from recommend.scoring import Item
+from recommend.scoring import Weather as ScoringWeather
 from recommend.scoring import recommend as _scoring_recommend
 from recommend.scoring import swap as _scoring_swap
 
@@ -59,39 +61,38 @@ def health() -> dict:
     }
 
 
-@app.post(f"/{API_VERSION}/analyze", response_model=AnalyzeResult)
-def analyze(req: AnalyzeRequest) -> AnalyzeResult:
-    # TODO(vision-pipeline-poc): 실제 파이프라인으로 교체
-    return AnalyzeResult(
-        job_id=req.job_id,
-        status="done",
-        model_version=MODEL_VERSION,
-        items=[
-            DetectedItem(
-                bbox=[0.08, 0.12, 0.84, 0.88],
-                category="top.knit",
-                category_conf=0.93,
-                colors=[ColorInfo(hex="#2B2B2B", ratio=0.71)],
-                pattern="solid",
-                aesthetic_scores={
-                    "feminine": 0.08,
-                    "street": 0.12,
-                    "minimal": 0.46,
-                    "vintage_layered": 0.12,
-                    "casual": 0.22,
-                },
-            )
-        ],
-    )
+@app.post(f"/{API_VERSION}/analyze", response_model=AnalyzeAccepted)
+def analyze(req: AnalyzeRequest) -> AnalyzeAccepted:
+    # TODO(#101): 실제 파이프라인 + 콜백으로 교체. 결과 형식은 docs/api-v1-examples.json
+    return AnalyzeAccepted(job_id=req.job_id, job_status="queued")
+
+
+# scoring.py는 내부 추구미 키(예: "feminine")로 동작한다. API의 style_id를 여기서 바꾼다.
+_STYLE_KEYS: dict[int, str] = yaml.safe_load(
+    (Path(__file__).resolve().parents[1] / "configs/style_ids.yaml").read_text(encoding="utf-8")
+)["styles"]
+
+
+def _style_key(style_id: int) -> str:
+    return _STYLE_KEYS.get(style_id, str(style_id))
 
 
 def _to_scoring_items(wardrobe: list) -> list[Item]:
-    return [Item(w.item_id, w.category, w.subcategory or "", w.aesthetic_scores or None) for w in wardrobe]
+    return [
+        Item(
+            w.item_id,
+            w.category,
+            w.subcategory or "",
+            {_style_key(s.style_id): s.score for s in w.style_scores} or None,
+        )
+        for w in wardrobe
+    ]
 
 
 def _to_scoring_weather(w) -> ScoringWeather:
     return ScoringWeather(
         temp_c=w.temperature,
+        feels_like_c=w.feels_like,
         precip_type=w.precipitation_type,
         humidity=w.humidity,
         wind_ms=w.wind_speed,
@@ -103,15 +104,15 @@ def _to_scoring_weather(w) -> ScoringWeather:
 def recommend(req: RecommendRequest) -> RecommendResult:
     items = _to_scoring_items(req.wardrobe)
     weather = _to_scoring_weather(req.weather)
-    aesthetic_key = req.aesthetics[0] if req.aesthetics else "casual"
-    result = _scoring_recommend(items, weather, aesthetic_key)
+    result = _scoring_recommend(items, weather, _style_key(req.main_style_id))
     if not result.outfits:
         raise HTTPException(
             status_code=422,
             detail="옷장에 추천 가능한 조합이 없습니다. 상의+하의 또는 원피스를 등록해 주세요.",
         )
     return RecommendResult(
-        sets=[OutfitSetOutput(item_ids=list(o.items.values()), score=o.score) for o in result.outfits]
+        sets=[OutfitSetOutput(item_ids=list(o.items.values()), score=o.score) for o in result.outfits],
+        reasons=result.reasons,
     )
 
 
@@ -119,8 +120,9 @@ def recommend(req: RecommendRequest) -> RecommendResult:
 def recommend_swap(req: SwapRequest) -> SwapResult:
     items = _to_scoring_items(req.wardrobe)
     weather = _to_scoring_weather(req.weather)
-    aesthetic_key = req.aesthetics[0] if req.aesthetics else "casual"
-    result = _scoring_swap(items, weather, aesthetic_key, req.outfit_item_ids, req.slot)
+    result = _scoring_swap(
+        items, weather, _style_key(req.main_style_id), req.outfit_item_ids, req.slot
+    )
     if not result.candidates:
         raise HTTPException(
             status_code=422,
