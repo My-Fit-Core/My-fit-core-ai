@@ -197,6 +197,15 @@ def test_off_shoulder_thresholds(fake_texts):
     assert _attributes(_Scorer(tie, 100.0), cfg, "top", "knit")["off_shoulder"] is None
 
 
+def test_tag_item_rejects_unknown_category():
+    """모델을 불러오기 전에 잘못된 대분류를 거절한다."""
+    from app.pipeline.tagging import tag_item
+
+    img = Image.new("RGB", (10, 10))
+    with pytest.raises(ValueError):
+        tag_item(img, (0, 0, 10, 10), np.ones((10, 10), bool), category="foo")
+
+
 def test_choose_returns_none_below_min_prob(fake_texts):
     img = np.array([[0.0, 0.0, 1.0]])
     assert _Scorer(img, 100.0).choose({"x": "p1", "y": "p2"}, 0.6) is None  # 0.5 < 0.6

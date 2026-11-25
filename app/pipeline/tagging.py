@@ -218,8 +218,10 @@ def tag_item(
 
     category가 주어지면(사용자가 직접 고른 대분류) 그 대분류 안에서만 소분류를 고른다.
     """
-    model, processor = load_tagger()
     styles_cfg, categories, attr_cfg = _load_configs()
+    if category is not None and category not in categories:
+        raise ValueError(f"알 수 없는 대분류: {category}")
+    model, processor = load_tagger()
     scale = float(model.logit_scale.detach().exp())
     img_feat = _encode_image(model, processor, crop_item(image, bbox, mask))  # (1, D)
     sc = _Scorer(img_feat, scale)
