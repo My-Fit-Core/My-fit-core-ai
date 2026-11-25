@@ -184,7 +184,7 @@ K-Fashion이 오래된 데이터라 요즘 스타일에서도 추구미 판정�
 
 ## 문서와 어긋나는 점 (보고)
 
-- `docs/todo/data-and-target-review.md`(#100)의 추구미 목록에 아직 **Y2K**가 있다. 11/9에 Y2K → 스트리트로 바뀌었고(`261109-1840-01-base-styles.md`, #44) 백엔드에도 전달됐다. 문서 담당 확인이 필요하다.
+- `docs/todo/data-and-target-review.md`(#100)의 추구미 목록에 **Y2K**가 남아 있었다. 사용자 확인 후 스트리트로 고쳤다(이 PR).
 - `docs/todo/feedback-loop-design.md`(#105)는 LLM/VLM 활용 검토로 적혀 있다. 이 Report §3 방향으로 바꿀지 결정이 필요하다.
 
 ## 후속 작업
