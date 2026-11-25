@@ -4,6 +4,9 @@
 추천은 recommend/scoring.py를 쓴다.
 """
 
+from pathlib import Path
+
+import yaml
 from fastapi import FastAPI, HTTPException
 
 # ML 패키지(cv2, torch 등)가 없는 환경(기본 requirements.txt)에서도 서버가 뜨도록 lazy import
@@ -64,14 +67,23 @@ def analyze(req: AnalyzeRequest) -> AnalyzeAccepted:
     return AnalyzeAccepted(job_id=req.job_id, job_status="queued")
 
 
+# scoring.py는 내부 추구미 키(예: "feminine")로 동작한다. API의 style_id를 여기서 바꾼다.
+_STYLE_KEYS: dict[int, str] = yaml.safe_load(
+    (Path(__file__).resolve().parents[1] / "configs/style_ids.yaml").read_text(encoding="utf-8")
+)["styles"]
+
+
+def _style_key(style_id: int) -> str:
+    return _STYLE_KEYS.get(style_id, str(style_id))
+
+
 def _to_scoring_items(wardrobe: list) -> list[Item]:
-    # scoring.py는 추구미 키(문자열)로 점수를 찾으므로 style_id를 문자열 키로 넘긴다
     return [
         Item(
             w.item_id,
             w.category,
             w.subcategory or "",
-            {str(s.style_id): s.score for s in w.style_scores} or None,
+            {_style_key(s.style_id): s.score for s in w.style_scores} or None,
         )
         for w in wardrobe
     ]
@@ -92,7 +104,7 @@ def _to_scoring_weather(w) -> ScoringWeather:
 def recommend(req: RecommendRequest) -> RecommendResult:
     items = _to_scoring_items(req.wardrobe)
     weather = _to_scoring_weather(req.weather)
-    result = _scoring_recommend(items, weather, str(req.main_style_id))
+    result = _scoring_recommend(items, weather, _style_key(req.main_style_id))
     if not result.outfits:
         raise HTTPException(
             status_code=422,
@@ -109,7 +121,7 @@ def recommend_swap(req: SwapRequest) -> SwapResult:
     items = _to_scoring_items(req.wardrobe)
     weather = _to_scoring_weather(req.weather)
     result = _scoring_swap(
-        items, weather, str(req.main_style_id), req.outfit_item_ids, req.slot
+        items, weather, _style_key(req.main_style_id), req.outfit_item_ids, req.slot
     )
     if not result.candidates:
         raise HTTPException(

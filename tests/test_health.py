@@ -36,3 +36,22 @@ def test_analyze_accepts_job():
     res = client.post("/v1/analyze", json=body)
     assert res.status_code == 200
     assert res.json() == {"job_id": "test", "job_status": "queued"}
+
+
+def test_recommend_v1_example_request():
+    """예시 요청(docs/api-v1-examples.json)이 /v1/recommend와 /swap을 통과한다."""
+    import json
+    from pathlib import Path
+
+    examples = json.loads(
+        (Path(__file__).resolve().parents[1] / "docs/api-v1-examples.json").read_text(encoding="utf-8")
+    )
+    req = examples["recommend_request"]
+    res = client.post("/v1/recommend", json=req)
+    assert res.status_code == 200, res.text
+    sets = res.json()["sets"]
+    assert sets and {"i1", "i2"} <= set(sets[0]["item_ids"])  # 상의+하의 뼈대
+
+    swap = client.post("/v1/recommend/swap", json={**req, "outfit_item_ids": ["i1", "i2"], "slot": "bottom"})
+    # 하의가 하나뿐이라 교체 후보가 없다
+    assert swap.status_code == 422

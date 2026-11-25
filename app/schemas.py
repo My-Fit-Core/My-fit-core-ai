@@ -48,7 +48,7 @@ class StyleScore(BaseModel):
 
 
 class UploadTarget(BaseModel):
-    client_item_key: str = Field(description="백엔드가 정한 옷 키. 누끼 업로드 URL과 1:1")
+    client_item_key: str = Field(description="옷 키. 누끼 업로드 URL과 1:1 (부여 방식은 백엔드 확인 대기)")
     upload_url: str = Field(description="누끼 PNG를 PUT으로 올릴 signed URL")
     path: str | None = Field(
         default=None,
