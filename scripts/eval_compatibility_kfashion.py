@@ -8,6 +8,8 @@ K-Fashion 착용 사진은 실제로 함께 입은 코디다. 같은 사진의 �
 - 크롭: 라벨 폴리곤 마스크 밖을 흰색으로 지운 박스 크롭(app.pipeline.tagging.crop_item, 서비스 입력과 같은 형식)
 - 분할: 쌍을 만들기 전에 이미지 단위로, 거의 같은 사진(같은 인물·촬영 추정) 묶음은 한쪽에만
 - 평가: AUC, FITB@10(정답 하의 1 + 다른 하의 9 중 1위), random / hard(같은 K-Fashion 주 스타일 안의 negative)
+- 대조 실험(--mode): graywb(조명 색감 제거), gray(흑백), color(CLIP 없이 색 히스토그램)로
+  "같은 사진" 지름길이 얼마나 되는지 본다. 분할은 raw 임베딩 기준 묶음으로 모드끼리 같다.
 - 재배포 금지: 임베딩·결과는 outputs/compatibility/에만 저장(gitignore). Report에는 집계 숫자만.
 
     python scripts/eval_compatibility_kfashion.py --data-dir <K-Fashion validation 폴더> [--detector <yolo 가중치>]
@@ -201,8 +203,38 @@ def embed_batch(model, processor, crops) -> np.ndarray:
     return feats.cpu().numpy()
 
 
-def build_embeddings(samples, cache: Path) -> dict:
-    """사진별 상의·하의·아우터 임베딩. cache에 이미 있는 사진은 건너뛴다."""
+# ── 대조 실험: "같은 사진"(조명·색감) 지름길 확인 ─────────────────────────
+# raw: 원래 크롭 / graywb: 옷 픽셀 gray-world 화이트밸런스로 사진별 색감 제거
+# gray: 흑백(색 정보 제거) / color: CLIP 없이 옷 픽셀 HSV 히스토그램만
+MODES = ("raw", "graywb", "gray", "color")
+
+
+def gray_world(image, mask: np.ndarray):
+    """마스크 안 픽셀의 채널 평균이 같아지도록 채널별로 곱한다(조명 색 보정)."""
+    from PIL import Image
+
+    arr = np.asarray(image.convert("RGB"), dtype=np.float32)
+    m = mask.astype(bool)
+    if not m.any():
+        return image
+    means = arr[m].mean(axis=0)
+    scale = means.mean() / np.maximum(means, 1e-6)
+    return Image.fromarray(np.clip(arr * scale, 0, 255).astype(np.uint8))
+
+
+def color_hist(image, mask: np.ndarray, bins=(8, 4, 4)) -> np.ndarray:
+    """마스크 안 픽셀의 HSV 3D 히스토그램(합 1 뒤 L2 정규화). 마스크가 비면 0벡터."""
+    hsv = np.asarray(image.convert("HSV"))[mask.astype(bool)]
+    if len(hsv) == 0:
+        return np.zeros(int(np.prod(bins)), dtype=np.float32)
+    hist, _ = np.histogramdd(hsv, bins=bins, range=[(0, 256)] * 3)
+    v = hist.ravel().astype(np.float32)
+    v /= v.sum()
+    return v / np.linalg.norm(v)
+
+
+def build_embeddings(samples, cache: Path, mode: str = "raw") -> dict:
+    """사진별 상의·하의·아우터 특징. cache에 이미 있는 사진은 건너뛴다."""
     from app.pipeline.tagging import crop_item, load_tagger
     from scripts.eval_segmentation_kfashion import truth_mask
 
@@ -211,21 +243,28 @@ def build_embeddings(samples, cache: Path) -> dict:
         z = np.load(cache, allow_pickle=True)
         data = z["data"].item()
     todo = [s for s in samples if s["image_id"] not in data]
-    print(f"임베딩 캐시 {len(data)}장, 새로 뽑을 사진 {len(todo)}장")
+    print(f"[{mode}] 캐시 {len(data)}장, 새로 뽑을 사진 {len(todo)}장")
     if not todo:
         return data
 
-    model, processor = load_tagger()
+    model, processor = (None, None) if mode == "color" else load_tagger()
     start = time.perf_counter()
     for n, s in enumerate(todo, 1):
         image = _load(s)
         if image is not None:
             parts = [p for p in s["parts"] if p["part"] in (TOP, BOTTOM, OUTER)]
-            crops = [
-                crop_item(image, p["box"], truth_mask(p["points"], s["size"]))
-                for p in parts
-            ]
-            embs = embed_batch(model, processor, crops)
+            masks = [truth_mask(p["points"], s["size"]) for p in parts]
+            if mode == "color":
+                embs = [color_hist(image, m) for m in masks]
+            else:
+                crops = []
+                for p, m in zip(parts, masks):
+                    src = gray_world(image, m) if mode == "graywb" else image
+                    crop = crop_item(src, p["box"], m)
+                    crops.append(
+                        crop.convert("L").convert("RGB") if mode == "gray" else crop
+                    )
+                embs = embed_batch(model, processor, crops)
             data[s["image_id"]] = {
                 "style": s["style"],
                 **{p["part"]: e for p, e in zip(parts, embs)},
@@ -340,13 +379,17 @@ def main() -> None:
     parser.add_argument("--dup-threshold", type=float, default=0.95)
     parser.add_argument("--detector", type=Path, default=None)
     parser.add_argument("--detector-images", type=int, default=300)
+    parser.add_argument("--mode", choices=MODES, default="raw")
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
     t0 = time.perf_counter()
     samples = pick_top_bottom(args.data_dir, args.images, args.sample_seed)
     print(f"상의+하의 사진 {len(samples)}장")
-    data = build_embeddings(samples, args.output_dir / "embeddings.npz")
+    suffix = "" if args.mode == "raw" else f"_{args.mode}"
+    data = build_embeddings(
+        samples, args.output_dir / f"embeddings{suffix}.npz", args.mode
+    )
     embed_seconds = time.perf_counter() - t0
 
     ids = [s["image_id"] for s in samples if s["image_id"] in data]
@@ -355,7 +398,18 @@ def main() -> None:
     styles = np.array(
         [data[i]["style"] or "(없음)" for i in ids]
     )  # 스타일 라벨 없는 사진
-    groups = near_dup_groups(top, bottom, args.dup_threshold)
+    # 거의 같은 사진 묶음은 모드와 상관없이 원래(raw) CLIP 임베딩으로 정한다(분할을 모드끼리 같게)
+    raw = data
+    if args.mode != "raw":
+        raw_cache = args.output_dir / "embeddings.npz"
+        assert raw_cache.exists(), "raw 모드를 먼저 실행해야 한다"
+        raw = np.load(raw_cache, allow_pickle=True)["data"].item()
+        assert all(i in raw for i in ids)
+    groups = near_dup_groups(
+        np.stack([raw[i][TOP] for i in ids]),
+        np.stack([raw[i][BOTTOM] for i in ids]),
+        args.dup_threshold,
+    )
     n_groups = len(np.unique(groups))
 
     summary = {
@@ -400,7 +454,7 @@ def main() -> None:
         summary["outer_images"] = len(outer_ids)
 
     # 서비스 입력(YOLO 검출 크롭)으로 바꿨을 때: 마지막 분할의 test 사진
-    if args.detector and last:
+    if args.detector and last and args.mode == "raw":
         train, test, lr = last
         test_ids = {ids[i] for i in test}
         det = detector_embeddings(
@@ -438,7 +492,8 @@ def main() -> None:
             }
             print(json.dumps({"detector": summary["detector"]}, ensure_ascii=False))
 
-    out = args.output_dir / "summary.json"
+    summary["mode"] = args.mode
+    out = args.output_dir / f"summary{suffix}.json"
     out.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"저장: {out}")
 

@@ -5,7 +5,9 @@ pytest.importorskip("sklearn")
 
 from scripts.eval_compatibility_kfashion import (
     auc,
+    color_hist,
     fitb_accuracy,
+    gray_world,
     group_split,
     near_dup_groups,
     pair_features,
@@ -64,3 +66,27 @@ def test_near_dup_groups_and_split_no_leak():
 def test_pair_features_shape():
     a = np.ones((3, 4))
     assert pair_features(a, a).shape == (3, 16)
+
+
+def test_gray_world_removes_color_cast():
+    from PIL import Image
+
+    arr = np.zeros((10, 10, 3), dtype=np.uint8)
+    arr[:, :5] = (200, 100, 100)  # 붉은 조명 아래 회색 옷 흉내
+    arr[:, 5:] = (100, 50, 50)
+    mask = np.ones((10, 10), dtype=bool)
+    out = np.asarray(gray_world(Image.fromarray(arr), mask), dtype=float)
+    means = out.reshape(-1, 3).mean(axis=0)
+    assert np.ptp(means) < 2  # 채널 평균이 같아짐
+
+
+def test_color_hist_masked_and_normalized():
+    from PIL import Image
+
+    img = Image.new("RGB", (10, 10), (255, 0, 0))
+    mask = np.zeros((10, 10), dtype=bool)
+    mask[:5] = True
+    v = color_hist(img, mask)
+    assert v.shape == (128,) and abs(np.linalg.norm(v) - 1) < 1e-6
+    assert np.count_nonzero(v) == 1  # 단색 → 한 칸
+    assert not color_hist(img, np.zeros((10, 10), dtype=bool)).any()
