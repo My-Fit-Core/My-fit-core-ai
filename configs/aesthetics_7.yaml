@@ -1,7 +1,7 @@
 # 추구미 7종 실험 설정 (issue #111). 서비스에는 아직 쓰지 않는다.
 # 기존 4종(미니멀·캐주얼·페미닌·스트리트)의 프롬프트는 configs/aesthetics.yaml과 같다(비교를 위해).
 # 빈티지 레이어드는 Y2K/빈티지와 보헤미안으로 나누고, 오피스/클래식을 추가했다.
-# style_id는 제안서(docs/reports/261126-*-style7-proposal.md)의 번호와 같다.
+# style_id는 제안서의 번호와 같다(docs/reports/261126-0310-01-style7-eval.md 부록 A).
 
 aesthetics:
   - key: minimal
