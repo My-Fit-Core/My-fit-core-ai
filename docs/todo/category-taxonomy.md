@@ -40,7 +40,7 @@
 | 대분류 | 소분류 초안 | 비고 |
 | --- | --- | --- |
 | `top` | `tshirt`, `shirt`, `blouse`, `knit`, `hoodie`, `sweatshirt`, `sleeveless` | `sweatshirt`(맨투맨) 추가 제안 |
-| `bottom` | `jeans`, `slacks`, `shorts`, `mini_skirt`, `long_skirt` | |
+| `bottom` | `jeans`, `slacks`, `shorts`, `mini_skirt, midi_skirt`, `long_skirt` | | (midi_skirt 11/27 추가)
 | `dress` | `mini_dress`, `long_dress` | 안 B면 `top` 아래로 |
 | `outerwear` | `jacket`, `blazer`, `coat`, `cardigan`, `padding` | 기존 `outer` → `outerwear` |
 | `shoes` | `sneakers`, `flats`, `loafers`, `heels`, `boots`, `sandals` | MVP 검출 범위에 따라 수동 등록만 |
