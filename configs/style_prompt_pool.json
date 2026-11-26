@@ -8,7 +8,9 @@
     "a neutral beige tonal outfit with clean modern lines, minimalist style",
     "a black turtleneck with straight black trousers, modern minimalist look",
     "an oversized long black coat over a monotone outfit, modern minimalist style",
-    "a clean girl outfit in white and cream with a sleek bun, minimal style"
+    "a clean girl outfit in white and cream with a sleek bun, minimal style",
+    "a sleek black and white outfit with a long coat and loafers, quiet luxury minimal style",
+    "a cream knit and white wide trousers in tonal neutrals, clean girl minimal style"
   ],
   "casual": [
     "a basic gray sweatshirt with blue jeans and white sneakers, everyday casual style",
@@ -18,7 +20,10 @@
     "a comfortable everyday outfit with a sweatshirt, jeans and sneakers, casual style",
     "a denim jacket over a t-shirt with jeans, everyday campus casual style",
     "a loose knit sweater with wide jeans and sneakers, comfy casual style",
-    "a plain white t-shirt with basic straight jeans and simple sneakers in a regular fit, casual style"
+    "a plain white t-shirt with basic straight jeans and simple sneakers in a regular fit, casual style",
+    "a track jacket with jeans and sneakers, athleisure casual style",
+    "a gray hoodie with wide jeans and a canvas tote bag, campus casual style",
+    "a denim jacket with a denim skirt, denim casual look"
   ],
   "feminine": [
     "a soft feminine outfit with a ribbon blouse and flowy skirt in pastel tones, feminine style",
@@ -28,7 +33,9 @@
     "a lovely pleated skirt with a puff-sleeve blouse and mary jane shoes, lovely style",
     "a balletcore outfit with a wrap top, tulle skirt and ballet flats, balletcore style",
     "a romantic lace dress in soft cream, romantic feminine style",
-    "a coquette outfit with lace and small ribbon details, coquette style"
+    "a coquette outfit with lace and small ribbon details, coquette style",
+    "a lace camisole layered over a long sleeve tee with a frilled skirt, coquette style",
+    "a cardigan over a lace top with ribbon details and a flowy skirt, lovely feminine style"
   ],
   "street": [
     "an oversized graphic hoodie with baggy cargo pants and a baseball cap, street style",
@@ -38,7 +45,10 @@
     "a cropped top with baggy cargo pants and chunky sneakers, girlish street style",
     "a hip hop outfit with an oversized jersey and wide pants, hip hop style",
     "a sporty track jacket with jogger pants and chunky sneakers, sporty street style",
-    "a skater outfit with a loose t-shirt, wide pants and a beanie, skater style"
+    "a skater outfit with a loose t-shirt, wide pants and a beanie, skater style",
+    "a soccer jersey with baggy jeans and sneakers, blokecore style",
+    "a windbreaker with cargo pants and trail shoes, gorpcore style",
+    "a cropped tee with low baggy pants and a cap, girlish street style"
   ],
   "y2k_vintage": [
     "a cropped baby tee with low-rise flared jeans and a mini shoulder bag, y2k style",
@@ -50,7 +60,11 @@
     "a punk rock outfit with a studded black leather jacket and chains, punk style",
     "a vintage-inspired outfit with a retro printed blouse and high-waisted jeans, retro style",
     "a colorful mismatched outfit with bold clashing patterns, kitsch style",
-    "a black punk outfit with a leather jacket and a plaid skirt, punk style"
+    "a black punk outfit with a leather jacket and a plaid skirt, punk style",
+    "a brown knit vest over a shirt with a plaid skirt and a newsboy cap, vintage style",
+    "low-rise embroidered flared jeans with a baby tee, y2k style",
+    "a leopard print frilled mini skirt with a pink ribbon top, gyaru style",
+    "an asymmetric plaid skirt with leg warmers and a slouchy knit, grunge style"
   ],
   "office_classic": [
     "a tailored blazer with a silk blouse and straight trousers, classic office style",
@@ -62,7 +76,10 @@
     "a structured trench coat belted at the waist, classic trench coat style",
     "a crisp white blouse with a black pencil skirt and pumps, office wear",
     "a preppy outfit with a knit vest over a collared shirt and a pleated skirt, preppy style",
-    "a french chic outfit with a striped shirt, straight trousers and loafers, french chic style"
+    "a french chic outfit with a striped shirt, straight trousers and loafers, french chic style",
+    "a knit sweater layered over a collared shirt with tailored wide trousers, office look",
+    "a gray blazer with a striped shirt and a long skirt, classic office style",
+    "a cardigan with a white collared shirt and a midi skirt, french chic style"
   ],
   "bohemian": [
     "a flowy floral maxi skirt with a loose peasant blouse and fringe details, bohemian style",
@@ -74,6 +91,10 @@
     "a crochet top with a patchwork maxi skirt, boho style",
     "a loose embroidered tunic with wide flared pants in earthy colors, hippie style",
     "a breezy printed resort dress for a vacation, boho chic style",
-    "a festival outfit with a fringe vest, denim shorts and boots, festival boho style"
+    "a festival outfit with a fringe vest, denim shorts and boots, festival boho style",
+    "a tiered cream maxi skirt with a lace blouse and brown boots, boho style",
+    "a fringe bag with a ruffled skirt, cowboy boots and a bandana, western boho style",
+    "a layered tiered midi skirt with a chunky cardigan and a beret, mori girl style",
+    "a crochet shawl over a long layered skirt in earthy tones, mori girl style"
   ]
 }
