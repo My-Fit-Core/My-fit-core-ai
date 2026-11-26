@@ -337,11 +337,24 @@ def test_off_shoulder_warmth_first_when_no_other_choice():
     wardrobe = _w(
         Item("t_off", "top", "knit", {"feminine": 0.9}, off_shoulder=True),
         Item("b_skirt", "bottom", "long_skirt", {"feminine": 0.8}),
-        Item("o_jacket", "outerwear", "jacket", {"feminine": 0.5}),
+        Item("o_coat", "outerwear", "coat", {"feminine": 0.5}, fit="regular"),
     )
     rec = recommend(wardrobe, Weather(temp_c=0, precip_type="none"), "feminine")
-    assert rec.outfits[0].items["outerwear"] == "o_jacket"
+    assert rec.outfits[0].items["outerwear"] == "o_coat"
     assert "off_shoulder_outer_for_warmth" in rec.reasons
+
+
+def test_off_shoulder_ok_with_jacket_any_fit():
+    """재킷은 열어 입어 어깨선 무관 — fit 무관하게 오프숄더와 허용(#130)."""
+    for fit in (None, "regular", "slim", "oversized"):
+        wardrobe = _w(
+            Item("t_off", "top", "knit", {"feminine": 0.9}, off_shoulder=True),
+            Item("b_skirt", "bottom", "long_skirt", {"feminine": 0.8}),
+            Item("o_jacket", "outerwear", "jacket", {"feminine": 0.9}, fit=fit),
+        )
+        rec = recommend(wardrobe, COLD, "feminine")
+        assert rec.outfits[0].items.get("outerwear") == "o_jacket", f"fit={fit}"
+        assert "off_shoulder_outer_for_warmth" not in rec.reasons
 
 
 def test_long_sleeve_and_user_warmth_raise_warmth():

@@ -21,6 +21,7 @@
 | 상태 | 작업 | 이슈 | 관련 기능 | 파일 | 완료 Report |
 | --- | --- | --- | --- | --- | --- |
 | 진행중 | 추천 엔진 v0 (엔드포인트 완료, 점수 고도화 대기) | — | F-302, F-304 | `recommend-engine-v0.md` | `261123-1652-01-recommend-scoring-v0.md` |
+| 대기 | 오프숄더 규칙 jacket 제외 — blazer만 never_with 유지 | #130 | F-302, F-304 | — | |
 | 대기 | 추구미별 온보딩 이미지 선정 및 Y2K 데이터 소스 확보 | #100 | F-201, F-203, F-302 | `data-and-target-review.md` | |
 | 대기 | 서빙 플랫폼 선정 및 Docker 배포 테스트 | #102 | 서빙 | `serving-platform.md` | |
 

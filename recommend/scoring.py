@@ -147,7 +147,10 @@ class _Scorer:
         if not rule or not any(i.off_shoulder for i in chosen if i.category in ("top", "dress")):
             return False
         return any(
-            i.subcategory in rule["never_with"] or i.fit not in rule["ok_if_outer_fit"]
+            i.subcategory in rule["never_with"] or (
+                i.subcategory not in rule.get("always_ok", [])
+                and i.fit not in rule["ok_if_outer_fit"]
+            )
             for i in chosen
             if i.category == self.cfg["outer_slot"]
         )
