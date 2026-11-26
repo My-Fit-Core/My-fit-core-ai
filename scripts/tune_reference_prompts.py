@@ -2,10 +2,10 @@
 
 다듬기: 레퍼런스 사진 절반(하위 태그별로 반씩) + K-Fashion 다듬기용(시드 42)
 확인: 레퍼런스 나머지 절반 + K-Fashion 확인용(시드 123, 시드 42 사진 제외)
-목표: 다듬기용 레퍼런스 적중률 평균 + K-Fashion 적중률 평균의 합(요즘 사진만 맞추고 K-Fashion이 무너지지 않게)
+목표: 다듬기용 레퍼런스 AUC 평균 + K-Fashion AUC 평균의 합(기본). --metric hit이면 1위 적중률 평균의 합
 방법: 스타일마다 문장 후보(configs/style_prompt_pool.json)에서 4개 조합, 한 스타일씩 돌아가며 바꾸기
 
-    python scripts/tune_reference_prompts.py --start configs/aesthetics_7.yaml --out configs/aesthetics_7_ref.yaml
+    python scripts/tune_reference_prompts.py --start configs/aesthetics_7.yaml --rounds 2 --out configs/aesthetics_7_ref.yaml
 """
 
 import argparse
@@ -58,7 +58,7 @@ def main():
     ap.add_argument("--k", type=int, default=4)
     ap.add_argument("--rounds", type=int, default=3)
     ap.add_argument("--out", type=Path, required=True)
-    ap.add_argument("--metric", choices=["hit", "auc"], default="hit", help="목표 지표(auc는 쏠림에 덜 민감)")
+    ap.add_argument("--metric", choices=["hit", "auc"], default="auc", help="목표 지표(auc는 쏠림에 덜 민감)")
     ap.add_argument("--json", type=Path, default=ROOT / "outputs/reference_eval/tune_result.json")
     args = ap.parse_args()
 

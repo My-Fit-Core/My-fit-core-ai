@@ -114,6 +114,27 @@ def evaluate(scores, truth, mask=None):
     }
 
 
+def configs_five(emb, truth):
+    order = ["feminine", "street", "minimal", "vintage_layered", "casual"]
+    idx = {k: i for i, k in enumerate(KEYS)}
+    t5 = np.stack([truth[:, idx["feminine"]], truth[:, idx["street"]], truth[:, idx["minimal"]],
+                   truth[:, idx["y2k_vintage"]] | truth[:, idx["bohemian"]], truth[:, idx["casual"]]], 1)
+    keep = t5.any(1)
+    from scripts.tune_style_prompts import encode_texts
+
+    cfg = {a["key"]: a for a in yaml.safe_load((ROOT / "configs/aesthetics.yaml").read_text(encoding="utf-8"))["aesthetics"]}
+    cols = []
+    for k in order:
+        scale, t = encode_texts(cfg[k]["prompts"]["outfit"])
+        cols.append((scale * emb[keep] @ t.T).mean(axis=1))
+    s, tt = np.stack(cols, 1), t5[keep]
+    top = s.argmax(1)
+    per = [{"key": k, "n": int(tt[:, j].sum()), "hit": float(tt[tt[:, j], top[tt[:, j]]].mean()),
+            "auc": auc(s[tt[:, j], j], s[~tt[:, j], j]), "top1": int((top == j).sum())} for j, k in enumerate(order)]
+    return {"per": per, "hit_mean": float(np.mean([p["hit"] for p in per])),
+            "auc_mean": float(np.mean([p["auc"] for p in per])), "n": int(keep.sum())}
+
+
 def split_mask(rows, seed=0):
     """하위 태그별로 반씩 나눠 다듬기용(True)/확인용(False)."""
     rng = np.random.default_rng(seed)
@@ -129,7 +150,7 @@ def split_mask(rows, seed=0):
 
 def show(name, r):
     print(f"[{name}] 사진 {r['n']}장  1위 적중률 평균 {r['hit_mean']:.3f}  AUC 평균 {r['auc_mean']:.3f}")
-    print("   " + "  ".join(f"{p['key']} {p['hit']:.2f}/{p['auc']:.3f}/{p['top1']}" for p in r["per"]))
+    print("   " + "  ".join(f"{p['key']} {p['hit']:.2f}/{p['auc']:.3f}/{p['top1']}" for p in r["per"] if p["hit"] is not None))
 
 
 def main():
@@ -157,6 +178,15 @@ def main():
     r = evaluate(prototype_scores(emb, truth, tune), truth, ~tune)
     rep["results"]["prototype:tune->check"] = r
     show("예시 사진 평균(다듬기용 반 → 확인용 반)", r)
+    # 5종 비교: 빈티지 레이어드 = Y2K/빈티지 또는 보헤미안, 5종에 대응이 없는 오피스만 있는 사진은 뺀다
+    five = configs_five(emb, truth)
+    rep["results"]["prompts:configs/aesthetics.yaml (5종)"] = five
+    show("5종 configs/aesthetics.yaml", five)
+    same = truth[:, [i for i, k in enumerate(KEYS) if k != "office_classic"]].any(1)  # 5종과 같은 사진
+    for c in args.configs:
+        r = evaluate(prompt_scores(emb, ROOT / c, "outfit"), truth, same)
+        rep["results"][f"prompts:{c} (5종과 같은 사진)"] = r
+        show(c + " (5종과 같은 사진)", r)
     args.json.parent.mkdir(parents=True, exist_ok=True)
     args.json.write_text(json.dumps(rep, ensure_ascii=False, indent=1), encoding="utf-8")
 
