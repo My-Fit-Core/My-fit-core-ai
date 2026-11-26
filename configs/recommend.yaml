@@ -56,8 +56,9 @@ warmth_adjust:
 # 규칙에 걸린 코디는 뺀다. 걸리지 않는 조합이 하나도 없으면(추워서 아우터가 꼭 필요) 보온을 우선해 남기고
 # reasons에 off_shoulder_outer_for_warmth를 남긴다. 교체(swap) 후보도 같은 규칙.
 off_shoulder:
-  never_with: [blazer, jacket]          # 아우터 소분류: 항상 걸림
-  ok_if_outer_fit: [oversized]          # 그 밖의 아우터는 핏이 이 값일 때만 괜찮음(모르면 걸림)
+  never_with: [blazer]                   # 아우터 소분류: 항상 걸림
+  always_ok: [jacket]                    # 열어 입어 어깨선 무관 — fit 무관하게 허용(#130)
+  ok_if_outer_fit: [oversized]          # 나머지 아우터는 핏이 이 값일 때만 괜찮음(모르면 걸림)
 
 # 최종 점수 = aesthetic × 추구미 점수 + weather × 날씨 점수
 weights: {aesthetic: 0.5, weather: 0.5}
