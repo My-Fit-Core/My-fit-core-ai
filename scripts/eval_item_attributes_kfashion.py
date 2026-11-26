@@ -224,7 +224,7 @@ def main():
             m.update(item_truth(labels.get(m["image_id"], {}).get(m["part"], {}), m["category"]))
     model, _ = tagging.load_tagger()
     scale = float(model.logit_scale.detach().exp())
-    styles_cfg, categories, attr_cfg = tagging._load_configs()
+    _, categories, attr_cfg = tagging._load_configs()
     rep: dict = {"seed": args.seed, "per_style": args.per_style}
 
     parts = [m for m in meta]
