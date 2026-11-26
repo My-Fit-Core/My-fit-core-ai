@@ -5,7 +5,7 @@
 
 categories:
   top: [tshirt, shirt, blouse, knit, hoodie, sweatshirt, sleeveless, inner_tshirt, sleeveless_inner]
-  bottom: [jeans, slacks, shorts, mini_skirt, long_skirt]
+  bottom: [jeans, slacks, shorts, mini_skirt, midi_skirt, long_skirt]
   dress: [mini_dress, long_dress]
   outerwear: [jacket, blazer, coat, cardigan, padding]
   shoes: [sneakers, flats, loafers, heels, boots, sandals]

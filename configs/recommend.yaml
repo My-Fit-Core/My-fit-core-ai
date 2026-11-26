@@ -17,7 +17,7 @@ optional_slots: [shoes, bag, accessory]
 # 소분류별 따뜻함 0(가장 시원)~3(가장 따뜻). 코디 따뜻함 = 뼈대 + 아우터의 합
 warmth:
   top: {sleeveless: 0, tshirt: 1, blouse: 1, shirt: 1, sweatshirt: 2, hoodie: 2, knit: 2, inner_tshirt: 1, sleeveless_inner: 0}
-  bottom: {shorts: 0, mini_skirt: 0, long_skirt: 1, slacks: 1, jeans: 1}
+  bottom: {shorts: 0, mini_skirt: 0, midi_skirt: 1, long_skirt: 1, slacks: 1, jeans: 1}  # midi_skirt는 11/27 추가, 값은 롱스커트와 같게 둔 초안(추천 담당 확인)
   dress: {mini_dress: 1, long_dress: 2}
   outerwear: {cardigan: 1, blazer: 1, jacket: 2, coat: 3, padding: 3}
 

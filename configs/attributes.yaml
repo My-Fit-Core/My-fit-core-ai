@@ -124,8 +124,10 @@ tagging:
       jeans: ["denim jeans", "blue denim pants"]
       slacks: ["long trousers that reach the ankles", "wide or straight long pants, not denim"]
       shorts: ["short pants that end above the knee", "shorts"]
-      mini_skirt: ["a mini skirt above the knee", "a short skirt"]
-      long_skirt: ["a long skirt below the knee", "a maxi skirt"]
+      # 스커트 기장(사용자 기준 11/27): 양쪽 무릎이 다 보이면 미니, 무릎~종아리면 미디, 종아리를 다 덮으면 롱
+      mini_skirt: ["a mini skirt that shows both knees", "a short skirt above the knee"]
+      midi_skirt: ["a midi skirt that ends between the knee and the calf", "a mid-length skirt covering the knees"]
+      long_skirt: ["a long maxi skirt that covers the calves", "an ankle-length skirt"]
       mini_dress: ["a short dress above the knee", "a mini dress"]
       long_dress: ["a long dress below the knee", "a maxi dress"]
       jacket: ["a casual jacket", "a short jacket with a zipper or buttons"]
