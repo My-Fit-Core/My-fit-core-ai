@@ -42,9 +42,12 @@ DUPLICATE_OVERLAP = 0.6
 # 아래가 잘린 하의·원피스: 마스크가 사진 맨 아래 이 비율(높이 기준) 안에 닿으면 잘린 것으로 보고 뺀다.
 # 입은 사진에서 하의가 프레임 밖으로 나가면 기장·핏을 알 수 없어서다(사용자 의견: 종아리까지 보여야 함).
 # ponytail: 프레임 끝에 닿는지로만 본다. 종아리 위치를 직접 보려면 자세 추정 모델이 필요하다
-# 바닥에 펼쳐 꽉 차게 찍은 원피스·바지도 끝에 닿을 수 있어서, 검출된 옷이 그것 하나뿐이면 빼지 않는다 [숫자] [결정: 사용자]
+# 바닥 사진·콜라주의 바지도 끝에 닿을 수 있어서, 바로 위에 상의·아우터가 붙어 있을 때(입은 사진)만 뺀다(is_worn_under) [숫자] [결정: 사용자]
 BOTTOM_EDGE_RATIO = 0.01
 TRUNCATION_CHECKED = {"bottom", "dress"}
+# 입은 사진인지 가르는 기준(is_worn_under). [숫자] 초안: 레퍼런스 착용 사진·콜라주로만 확인
+WORN_OVERLAP_RATIO = 0.5
+WORN_GAP_RATIO = 0.05
 
 Fetch = Callable[[str], bytes]
 Upload = Callable[[str, bytes], None]
@@ -118,8 +121,7 @@ def find_regions(image: Image.Image, req: AnalyzeRequest, detect) -> list[Region
     if req.category:
         same = [r for r in regions if r.category == req.category]
         return [same[0] if same else full]
-    if len(regions) > 1:  # 한 벌뿐이면 잘린 것인지 꽉 차게 찍은 것인지 알 수 없어 남긴다
-        regions = [r for r in regions if not is_cut_at_bottom(r, image.height)]
+    regions = [r for r in regions if not (is_cut_at_bottom(r, image.height) and is_worn_under(r, regions, image.height))]
     if not regions:
         raise JobError(ErrorCode.NO_GARMENT_DETECTED, "옷을 찾지 못했습니다")
     return regions[: len(req.items)]
@@ -139,6 +141,25 @@ def drop_duplicates(regions: list[Region]) -> list[Region]:
         if not dup:
             kept.append(r)
     return kept
+
+
+def is_worn_under(region: Region, regions: list[Region], height: int) -> bool:
+    """입은 사진처럼 이 하의·원피스 바로 위에 상의·아우터가 붙어 있으면 True.
+
+    바닥 사진·콜라주는 옷이 따로 놓여 있어 위아래로 붙어 있지 않다. 그래서 사진 끝에 닿아도 잘린 옷으로 보지 않는다.
+    기준: 위 옷의 아래 끝이 이 옷의 위 끝보다 아래(또는 사진 높이의 WORN_GAP_RATIO 안쪽)이고,
+    가로로 좁은 쪽 폭의 WORN_OVERLAP_RATIO 이상 겹친다. [숫자]
+    """
+    x1, y1, x2, _ = region.bbox
+    for up in regions:
+        if up is region or up.category not in ("top", "outerwear"):
+            continue
+        ux1, _, ux2, uy2 = up.bbox
+        overlap = min(x2, ux2) - max(x1, ux1)
+        narrow = min(x2 - x1, ux2 - ux1)
+        if narrow > 0 and overlap / narrow >= WORN_OVERLAP_RATIO and uy2 >= y1 - WORN_GAP_RATIO * height:
+            return True
+    return False
 
 
 def is_cut_at_bottom(region: Region, height: int) -> bool:
