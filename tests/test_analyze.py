@@ -121,10 +121,22 @@ def test_duplicate_detection_dropped():
 
 
 def test_bottom_cut_at_frame_edge_dropped():
-    """아래가 사진 밖으로 잘린 하의는 빼고 상의만 본다."""
-    fake = Fake([_det(0), _det(100, "trousers", 0.8, y2=H)])
+    """입은 사진: 상의 바로 아래 하의가 사진 밖으로 잘리면 빼고 상의만 본다."""
+    top = _det(100, y2=60)
+    pants = _det(100, "trousers", 0.8, y2=H)
+    pants.mask[:58] = False  # 상의 아래에서 시작
+    pants.bbox = (100.0, 58.0, 150.0, float(H))
+    fake = Fake([top, pants])
     res = _run(_req(2), fake)
     assert [i.category for i in res.items] == ["top"]
+
+
+def test_flatlay_bottom_touching_edge_is_kept():
+    """바닥 사진·콜라주: 바지가 사진 끝에 닿아도 위에 붙은 상의가 없으면 남긴다."""
+    top = _det(0)  # x 0~50, y 10~90
+    pants = _det(100, "trousers", 0.8, y2=H)  # x 100~150, 가로로 안 겹침
+    res = _run(_req(2), Fake([top, pants]))
+    assert [i.category for i in res.items] == ["top", "bottom"]
 
 
 def test_single_item_touching_bottom_is_kept():
