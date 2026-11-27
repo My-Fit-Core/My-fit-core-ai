@@ -8,7 +8,10 @@
     "a plain black turtleneck knit, modern minimalist style",
     "a crisp white shirt with a sharp clean collar, minimalist style",
     "a sleek all-black top with clean modern lines, minimalist style",
-    "an oversized long black coat with no details, modern minimalist style"
+    "an oversized long black coat with no details, modern minimalist style",
+    "a sleek black long coat, quiet luxury minimal style",
+    "a cream knit sweater in a clean tonal look, clean girl minimal style",
+    "wide white trousers with a clean drape, minimal style"
   ],
   "casual": [
     "a plain white t-shirt in a regular fit, casual style",
@@ -18,7 +21,11 @@
     "a basic gray sweatshirt, everyday casual style",
     "a plain hooded zip-up, simple daily casual style",
     "a striped long-sleeve t-shirt, simple casual style",
-    "a denim jacket, everyday campus casual style"
+    "a denim jacket, everyday campus casual style",
+    "a gray hoodie, campus casual style",
+    "a track jacket with zip, athleisure casual style",
+    "wide light-wash jeans, denim casual style",
+    "a denim skirt, denim casual look"
   ],
   "feminine": [
     "a pastel ruffled blouse with a ribbon tie, feminine style",
@@ -28,7 +35,11 @@
     "a pleated tennis skirt in pastel color, lovely style",
     "a wrap top with a tulle skirt, balletcore style",
     "a romantic lace blouse in soft cream, romantic feminine style",
-    "a top with small ribbon details and lace, coquette style"
+    "a top with small ribbon details and lace, coquette style",
+    "a lace camisole top, coquette style",
+    "a frilled tiered skirt, lovely feminine style",
+    "a wrap ballet top in soft pink, balletcore style",
+    "a cardigan with ribbon details, lovely style"
   ],
   "street": [
     "an oversized graphic hoodie, street style",
@@ -38,7 +49,11 @@
     "a cropped t-shirt with a bold logo, girlish street style",
     "an oversized sports jersey, hip hop style",
     "a sporty track jacket with stripes, sporty street style",
-    "wide skater pants, skater style"
+    "wide skater pants, skater style",
+    "a soccer jersey, blokecore style",
+    "a windbreaker jacket, gorpcore style",
+    "baggy low-rise jeans, girlish street style",
+    "technical cargo pants with straps, techwear style"
   ],
   "y2k_vintage": [
     "a cropped baby tee with a cute retro print, y2k style",
@@ -48,7 +63,12 @@
     "a retro printed blouse with a bold vintage pattern, 70s retro style",
     "a colorful top with playful cartoon prints, kitsch style",
     "a black leather jacket with studs, punk style",
-    "a plaid mini skirt with chains, punk style"
+    "a plaid mini skirt with chains, punk style",
+    "a brown knit vest, vintage style",
+    "embroidered flared jeans, y2k style",
+    "a leopard print frilled mini skirt, gyaru style",
+    "an asymmetric plaid skirt, grunge style",
+    "a faded vintage band t-shirt, retro style"
   ],
   "office_classic": [
     "a tailored navy blazer, classic office style",
@@ -58,7 +78,11 @@
     "a black pencil skirt, office wear",
     "a matching suit jacket, polished office look",
     "a knit vest over a collared shirt, preppy style",
-    "pressed straight slacks with a center crease, office wear"
+    "pressed straight slacks with a center crease, office wear",
+    "a knit sweater worn over a collared shirt, office look",
+    "a gray tailored blazer, classic office style",
+    "a navy pleated midi skirt, french chic style",
+    "a collared knit vest, preppy style"
   ],
   "bohemian": [
     "a flowy floral maxi skirt, bohemian style",
@@ -68,6 +92,11 @@
     "a flowy paisley maxi dress in earthy tones, bohemian hippie style",
     "a patchwork maxi skirt, boho style",
     "wide flared pants in earthy colors, hippie style",
-    "a breezy printed resort dress, boho chic style"
+    "a breezy printed resort dress, boho chic style",
+    "a tiered cream maxi skirt with lace trim, boho style",
+    "a fringe suede bag, western boho style",
+    "a layered tiered midi skirt in earthy tones, mori girl style",
+    "a crochet shawl, mori girl style",
+    "a ruffled high-low skirt, festival boho style"
   ]
 }
