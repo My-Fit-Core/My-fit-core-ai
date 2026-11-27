@@ -1,5 +1,5 @@
 # style_id ↔ 내부 추구미 키 (API v1, issue #114). 백엔드 style 테이블의 메인 스타일 id와 같아야 한다.
-# 추구미 7종 확정(사용자 결정 2026-11-27). 번호는 백엔드 style 테이블과 맞춘다(백엔드 확인 대기).
+# 추구미 7종 확정(사용자 결정 2026-11-27). 번호는 AI 파트가 정해 백엔드에 전달하고, 백엔드 style 테이블 id를 이 번호로 만든다(11/27 사용자 결정).
 # 추천(recommend/scoring.py, configs/recommend.yaml)은 내부 키로 동작하므로 API 경계(app/main.py)에서 바꾼다.
 styles:
   1: minimal
