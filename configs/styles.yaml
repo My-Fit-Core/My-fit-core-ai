@@ -1,5 +1,5 @@
 # 서비스용 추구미(스타일) 판정 문장 (태깅 v1, issue #117).
-# style_id는 configs/style_ids.yaml과 같다. [초안] 7종 제안 기준이며 7종 합의 후 확정한다.
+# style_id는 configs/style_ids.yaml과 같다. 추구미 7종은 확정(11/27). 문장은 초안이다.
 # 문장은 옷 한 벌(누끼) 사진용이다. 실험용 전체 설정(코디 문장, K-Fashion 연결)은 configs/aesthetics_7.yaml(#111).
 #
 # 점수: 스타일마다 따로 0~1 (합 1 아님).
