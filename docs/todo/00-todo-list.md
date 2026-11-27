@@ -49,7 +49,7 @@
 
 | 상태 | 작업 | 이슈 | 관련 기능 | 파일 | 완료 Report |
 | --- | --- | --- | --- | --- | --- |
-| 진행중 | 상의·하의 어울림 점수(compatibility) 실험 | #91 | F-302 | — | |
+| 완료 | 상의·하의 어울림 점수(compatibility) 실험 — 추천 연결 여부는 추천 담당이 판단 | #91 | F-302 | `outfit-compatibility.md` | `261125-1041-01-outfit-compatibility.md` |
 | 진행중 | 추구미 7종 제안·측정 (K-Fashion 5종 비교 완료, 레퍼런스 사진 대기) | #111 | F-203, F-302 | — | `261126-0310-01-style7-eval.md` |
 | 대기 | 오진율 개선 — 슬롯별 피드백 루프 설계 조사 | #105 | F-302 | `feedback-loop-design.md` | |
 | 대기 | 누끼 모델 후보 비교 (MobileSAM, SAM 2 tiny) | #41 | F-202 | — | |
